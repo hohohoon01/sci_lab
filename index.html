@@ -67,8 +67,8 @@
               Science Lab
             </span>
             <span id="syncStatus" class="text-teal-100 text-[10px] sm:text-xs flex items-center mt-1 sm:mt-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-1 animate-pulse" id="syncDot"></span>
-              데이터 연결 중...
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-1 animate-pulse flex-shrink-0" id="syncDot"></span>
+              <span id="syncText">데이터 연결 중...</span>
             </span>
           </div>
           <h1 class="text-xl sm:text-3xl font-extrabold text-white mt-0.5 tracking-tight truncate">
@@ -245,7 +245,6 @@
     <div class="p-4 space-y-3">
       <input type="password" id="adminPwInput" placeholder="비밀번호"
         class="w-full border p-3 text-center text-sm rounded-xl focus:ring-2 focus:ring-slate-800">
-      <div class="text-[10px] text-slate-400 text-center">초기 비밀번호: 1234</div>
     </div>
 
     <div class="bg-slate-50 p-3 flex justify-end space-x-2">
@@ -370,7 +369,35 @@ function escapeHtml(value) {
   }[c]));
 }
 
-let activeTeachers = ['이서연','손아영','이정훈','정혜정'];
+function setSyncStatus(state, message) {
+  const dot = document.getElementById('syncDot');
+  const text = document.getElementById('syncText');
+  const status = document.getElementById('syncStatus');
+
+  if (!status) return;
+
+  if (dot) {
+    if (state === 'loading') {
+      dot.className =
+        'w-1.5 h-1.5 rounded-full bg-amber-400 mr-1 animate-pulse flex-shrink-0';
+    } else if (state === 'ok') {
+      dot.className =
+        'w-1.5 h-1.5 rounded-full bg-teal-300 mr-1 flex-shrink-0';
+    } else {
+      dot.className =
+        'w-1.5 h-1.5 rounded-full bg-red-300 mr-1 flex-shrink-0';
+    }
+  }
+
+  if (text) {
+    text.textContent = message;
+  } else {
+    // 예전 캐시 HTML과 섞여도 오류가 나지 않도록 안전하게 처리
+    status.textContent = message;
+  }
+}
+
+let activeTeachers = ['이서연1','손아영','이정훈','정혜정'];
 let timetables = {};
 let reservations = [];
 let currentMonday = getMonday(new Date());
@@ -421,26 +448,38 @@ async function apiPost(action, payload = {}) {
 
 async function fetchInitData(silent = false) {
   try {
-    document.getElementById('syncDot').className =
-      'w-1.5 h-1.5 rounded-full bg-amber-400 mr-1 animate-pulse';
+    setSyncStatus('loading', '공유 데이터 동기화 중...');
 
     const data = await apiGet('getInitData');
 
-    activeTeachers = Array.isArray(data.activeTeachers) ? data.activeTeachers : activeTeachers;
+    activeTeachers =
+      Array.isArray(data.activeTeachers)
+        ? data.activeTeachers
+        : activeTeachers;
+
     timetables = data.timetables || {};
-    reservations = Array.isArray(data.reservations) ? data.reservations : [];
+    reservations =
+      Array.isArray(data.reservations)
+        ? data.reservations
+        : [];
 
-    document.getElementById('syncStatus').innerHTML =
-      '<span class="w-1.5 h-1.5 rounded-full bg-teal-300 mr-1"></span>공유 데이터 동기화 완료';
-
+    setSyncStatus('ok', '공유 데이터 동기화 완료');
     renderUI();
   } catch (error) {
     console.error('데이터 동기화 실패:', error);
 
-    document.getElementById('syncStatus').innerHTML =
-      `<span class="text-red-200">연결 실패: ${escapeHtml(error.message)}</span>`;
+    setSyncStatus(
+      'error',
+      '연결 실패: ' + String(error.message || error)
+    );
 
-    if (!silent) alert('Google Sheet 연결에 실패했습니다.\n' + error.message);
+    if (!silent) {
+      alert(
+        'Google Sheet 연결에 실패했습니다.\n' +
+        String(error.message || error)
+      );
+    }
+
     renderUI();
   }
 }
@@ -928,6 +967,9 @@ async function syncTimetablesFromSheet() {
             <div class="clear-both text-[9px] mt-1 text-emerald-700">
               탭: ${escapeHtml(item.sheetName)}
             </div>
+            <div class="text-[9px] mt-1 text-emerald-700">
+              매칭: ${escapeHtml(item.matchedBy || '자동')}
+            </div>
           </div>`;
       } else {
         const reason = item ? item.reason : '분석 결과 없음';
@@ -936,7 +978,17 @@ async function syncTimetablesFromSheet() {
           <div class="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
             ⚠️ ${escapeHtml(t)}
             <span class="float-right text-[10px]">0시간</span>
-            <div class="clear-both text-[9px] mt-1">
+            ${item && item.sheetName
+              ? `<div class="clear-both text-[9px] mt-1 font-semibold">
+                   연결된 탭: ${escapeHtml(item.sheetName)}
+                 </div>`
+              : ''}
+            ${item && item.matchedBy
+              ? `<div class="text-[9px] mt-1">
+                   매칭 방식: ${escapeHtml(item.matchedBy)}
+                 </div>`
+              : ''}
+            <div class="text-[9px] mt-1">
               ${escapeHtml(reason)}
             </div>
           </div>`;
@@ -985,14 +1037,110 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
   function compact(value) {
     return cleanText(value)
       .replace(/\s+/g, '')
-      .replace(/[·._()[\]{}]/g, '');
+      .replace(/[·._()[\]{}\-]/g, '');
   }
 
   function teacherKey(value) {
     return compact(value)
       .replace(/선생님/g, '')
       .replace(/교사/g, '')
-      .replace(/시간표/g, '');
+      .replace(/시간표/g, '')
+      .replace(/담당/g, '');
+  }
+
+  function teacherBaseKey(value) {
+    return teacherKey(value)
+      .replace(/\d+$/g, '');
+  }
+
+  function topCellsContainTeacher(sheet, teacher) {
+    const target = teacherBaseKey(teacher);
+    if (!target) return false;
+
+    const rows = Array.isArray(sheet.values) ? sheet.values : [];
+
+    for (let r = 0; r < Math.min(rows.length, 10); r++) {
+      const row = rows[r] || [];
+
+      for (let c = 0; c < Math.min(row.length, 10); c++) {
+        const cellKey = teacherBaseKey(row[c]);
+
+        if (
+          cellKey &&
+          (
+            cellKey === target ||
+            cellKey.includes(target) ||
+            target.includes(cellKey)
+          )
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  function findTeacherSheet(teacher) {
+    const exactKey = teacherKey(teacher);
+    const baseKey = teacherBaseKey(teacher);
+
+    let sheet = rawSheets.find(s =>
+      teacherKey(s.name) === exactKey
+    );
+
+    if (sheet) {
+      return {
+        sheet,
+        matchedBy: '탭 이름 정확 일치'
+      };
+    }
+
+    sheet = rawSheets.find(s =>
+      teacherBaseKey(s.name) === baseKey
+    );
+
+    if (sheet) {
+      return {
+        sheet,
+        matchedBy: '탭 이름 숫자/표기 보정 일치'
+      };
+    }
+
+    sheet = rawSheets.find(s => {
+      const key = teacherKey(s.name);
+      const base = teacherBaseKey(s.name);
+
+      return (
+        (key && exactKey &&
+          (key.includes(exactKey) || exactKey.includes(key))) ||
+        (base && baseKey &&
+          (base.includes(baseKey) || baseKey.includes(base)))
+      );
+    });
+
+    if (sheet) {
+      return {
+        sheet,
+        matchedBy: '탭 이름 부분 일치'
+      };
+    }
+
+    sheet = rawSheets.find(s =>
+      topCellsContainTeacher(s, teacher)
+    );
+
+    if (sheet) {
+      return {
+        sheet,
+        matchedBy: '시트 상단 셀의 교사명으로 일치'
+      };
+    }
+
+    return {
+      sheet: null,
+      matchedBy: ''
+    };
   }
 
   function dayIndexFromCell(value) {
@@ -1020,7 +1168,6 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
 
   function parseLessonCell(raw) {
     const text = cleanText(raw);
-
     if (!text) return '';
 
     const lines = text
@@ -1058,56 +1205,62 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
       : (subject || text);
   }
 
-  const sheetNames = rawSheets.map(s => String(s.name || ''));
+  const sheetNames =
+    rawSheets.map(s => String(s.name || ''));
+
   const results = {};
 
   targetTeachers.forEach(teacher => {
-    const targetKey = teacherKey(teacher);
-
-    let sheet = rawSheets.find(s =>
-      teacherKey(s.name) === targetKey
-    );
-
-    if (!sheet) {
-      sheet = rawSheets.find(s => {
-        const key = teacherKey(s.name);
-
-        return key &&
-          targetKey &&
-          (key.includes(targetKey) || targetKey.includes(key));
-      });
-    }
+    const found = findTeacherSheet(teacher);
+    const sheet = found.sheet;
 
     if (!sheet) {
       results[teacher] = {
         count: 0,
         schedule: {0:{},1:{},2:{},3:{},4:{}},
         sheetName: '',
-        reason: '교사 이름과 일치하는 탭을 찾지 못함'
+        matchedBy: '',
+        reason:
+          '교사명과 연결되는 탭을 찾지 못함. 아래 실제 탭 목록을 확인하세요.'
       };
       return;
     }
 
-    const rows = Array.isArray(sheet.values) ? sheet.values : [];
-    const schedule = {0:{},1:{},2:{},3:{},4:{}};
+    const rows =
+      Array.isArray(sheet.values)
+        ? sheet.values
+        : [];
+
+    const schedule =
+      {0:{},1:{},2:{},3:{},4:{}};
 
     let headerRow = -1;
     let dayCols = {};
 
-    for (let r=0;r<Math.min(rows.length, 20);r++) {
-      const found = {};
+    for (
+      let r = 0;
+      r < Math.min(rows.length, 25);
+      r++
+    ) {
+      const foundDays = {};
 
       (rows[r] || []).forEach((cell, col) => {
-        const dIdx = dayIndexFromCell(cell);
+        const dIdx =
+          dayIndexFromCell(cell);
 
-        if (dIdx >= 0 && found[dIdx] === undefined) {
-          found[dIdx] = col;
+        if (
+          dIdx >= 0 &&
+          foundDays[dIdx] === undefined
+        ) {
+          foundDays[dIdx] = col;
         }
       });
 
-      if (Object.keys(found).length >= 3) {
+      if (
+        Object.keys(foundDays).length >= 3
+      ) {
         headerRow = r;
-        dayCols = found;
+        dayCols = foundDays;
         break;
       }
     }
@@ -1117,22 +1270,34 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
         count: 0,
         schedule,
         sheetName: sheet.name,
-        reason: `탭은 발견했지만 월~금 요일 머리글을 찾지 못함`
+        matchedBy: found.matchedBy,
+        reason:
+          `탭 "${sheet.name}"은 찾았지만 월~금 요일 머리글을 찾지 못함`
       };
       return;
     }
 
-    const firstDayCol = Math.min(...Object.values(dayCols));
+    const firstDayCol =
+      Math.min(...Object.values(dayCols));
+
     let count = 0;
     let periodRows = 0;
 
-    for (let r=headerRow+1;r<rows.length;r++) {
+    for (
+      let r = headerRow + 1;
+      r < rows.length;
+      r++
+    ) {
       const row = rows[r] || [];
       let period = null;
 
-      // 요일 열 앞쪽을 모두 탐색. 중간에 글자가 있어도 멈추지 않음.
-      for (let c=0;c<Math.max(firstDayCol, 1);c++) {
-        const p = periodFromCell(row[c]);
+      for (
+        let c = 0;
+        c < Math.max(firstDayCol, 1);
+        c++
+      ) {
+        const p =
+          periodFromCell(row[c]);
 
         if (p !== null) {
           period = p;
@@ -1140,10 +1305,14 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
         }
       }
 
-      // 혹시 교시 열이 오른쪽에 있어도 앞 5열 범위 추가 탐색
       if (period === null) {
-        for (let c=0;c<Math.min(row.length, 5);c++) {
-          const p = periodFromCell(row[c]);
+        for (
+          let c = 0;
+          c < Math.min(row.length, 8);
+          c++
+        ) {
+          const p =
+            periodFromCell(row[c]);
 
           if (p !== null) {
             period = p;
@@ -1153,35 +1322,47 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
       }
 
       if (period === null) continue;
+
       periodRows++;
 
-      Object.entries(dayCols).forEach(([dayIdxStr, col]) => {
-        const dayIdx = Number(dayIdxStr);
-        const raw = row[col];
+      Object.entries(dayCols).forEach(
+        ([dayIdxStr, col]) => {
+          const dayIdx =
+            Number(dayIdxStr);
 
-        const display = parseLessonCell(raw);
+          const display =
+            parseLessonCell(row[col]);
 
-        if (display) {
-          schedule[dayIdx][period] = display;
-          count++;
+          if (display) {
+            schedule[dayIdx][period] =
+              display;
+
+            count++;
+          }
         }
-      });
+      );
     }
 
     results[teacher] = {
       count,
       schedule,
       sheetName: sheet.name,
+      matchedBy: found.matchedBy,
       reason:
         count > 0
           ? '정상 추출'
-          : (periodRows === 0
-              ? '요일 머리글은 찾았지만 1~7교시 행을 찾지 못함'
-              : '요일/교시는 찾았지만 수업 셀이 비어 있거나 형식을 읽지 못함')
+          : (
+              periodRows === 0
+                ? `탭 "${sheet.name}"에서 요일은 찾았지만 1~7교시 행을 찾지 못함`
+                : `탭 "${sheet.name}"에서 요일/교시는 찾았지만 수업 셀을 읽지 못함`
+            )
     };
   });
 
-  return { results, sheetNames };
+  return {
+    results,
+    sheetNames
+  };
 }
 
 function navigateWeek(days) {
