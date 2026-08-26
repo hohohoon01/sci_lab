@@ -1,55 +1,264 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#155e75">
-<title>강동중 과학실 예약</title>
-<style>
-:root{--bg:#f4f7fb;--card:#fff;--line:#dbe4ee;--text:#172033;--muted:#64748b;--primary:#155e75;--danger:#dc2626;--shadow:0 8px 28px rgba(15,23,42,.08)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR","Apple SD Gothic Neo",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;display:grid;grid-template-columns:180px 1fr}.sidebar{background:#0f172a;color:#fff;padding:20px 14px;position:sticky;top:0;height:100vh}.brand{font-size:20px;font-weight:900;line-height:1.4;margin:2px 6px 22px}.brand small{display:block;font-size:12px;color:#a8b6cb;font-weight:500;margin-top:6px}.room-tab,.side-btn{width:100%;border:0;border-radius:12px;padding:13px 12px;margin:5px 0;text-align:left;background:transparent;color:#dbe7f4;font-weight:800}.room-tab:hover,.side-btn:hover{background:rgba(255,255,255,.08)}.room-tab.active{background:#fff;color:#0f172a}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:#22c55e}.room-tab[data-room="과학2실"] .dot{background:#60a5fa}.sep{height:1px;background:rgba(255,255,255,.13);margin:16px 4px}.content{padding:22px;min-width:0}.topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}h1{font-size:25px;margin:0 0 5px}.subtitle{margin:0;color:var(--muted);font-size:14px}.status{padding:8px 11px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:800}.status.warn{background:#fff7ed;color:#b45309}.status.error{background:#fef2f2;color:#b91c1c}.notice{display:none;margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;line-height:1.5}.notice.show{display:block}.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px}.btn{border:1px solid var(--line);background:#fff;color:var(--text);padding:9px 12px;border-radius:10px;font-weight:800}.btn:hover{background:#f8fafc}.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}.btn.small{padding:6px 8px;font-size:12px}.week-label{font-weight:900;min-width:180px;text-align:center}.spacer{flex:1}input,select,textarea{width:100%;border:1px solid #cdd7e2;background:#fff;border-radius:10px;padding:10px 11px;color:var(--text)}textarea{min-height:92px;resize:vertical}.date-input{width:auto}.table-wrap{overflow:auto;border-top:1px solid var(--line)}table{width:100%;border-collapse:separate;border-spacing:0;min-width:900px}th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line)}th:last-child,td:last-child{border-right:0}thead th{background:#f8fafc;padding:11px 8px;text-align:center;font-size:13px;position:sticky;top:0;z-index:2}.period-head{width:76px}.period-cell{background:#fbfdff;text-align:center;font-weight:900;padding:12px 7px;white-space:nowrap}.slot{min-height:92px;padding:8px;background:#fff;display:flex;align-items:center;justify-content:center}.slot.today{box-shadow:inset 0 3px 0 #22c55e}.add-btn{width:42px;height:42px;border-radius:50%;border:1px dashed #94a3b8;background:#f8fafc;color:#64748b;font-size:25px;line-height:1}.add-btn:hover{background:#ecfeff;border-color:#0891b2;color:#0e7490}.reservation{width:100%;align-self:stretch;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px;font-size:12px;line-height:1.4;color:#1e3a8a}.reservation b{display:block;font-size:13px;margin-bottom:3px;color:#1e40af}.mobile-room-bar{display:none}.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal-backdrop.open{display:flex}.modal{width:min(620px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 25px 80px rgba(0,0,0,.28)}.modal.large{width:min(1000px,100%)}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}.modal-head h2{font-size:19px;margin:0}.x{border:0;background:transparent;font-size:25px;color:#64748b}.modal-body{padding:18px}.modal-actions{display:flex;gap:8px;justify-content:flex-end;padding:14px 18px;border-top:1px solid var(--line)}.summary{padding:11px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:12px;margin-bottom:14px;line-height:1.5}.field{margin-bottom:12px}.field label{display:block;font-size:12px;color:#475569;font-weight:900;margin:0 0 6px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mode-switch{display:flex;gap:8px;margin-bottom:14px}.mode-switch button{flex:1}.mode-switch .active{background:#ecfeff;border-color:#67e8f9;color:#155e75}.slot-info{background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:11px 12px;margin-bottom:12px;color:#115e59;font-size:13px}.slot-info.empty{background:#f8fafc;border-color:var(--line);color:#64748b}.hint{font-size:12px;color:#64748b;line-height:1.5;margin-top:6px}.admin-section{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}.admin-section h3{margin:0 0 10px;font-size:16px}.admin-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.admin-row .grow{flex:1;min-width:220px}.teacher-list{display:grid;gap:8px;margin-top:12px}.teacher-item{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:#fbfdff}.teacher-meta{font-size:12px;color:#64748b;margin-top:3px}.preview{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:12px}.preview table{min-width:720px}.preview th,.preview td{padding:8px;font-size:12px;vertical-align:top}.preview-empty{padding:22px;text-align:center;color:#64748b}.toast{position:fixed;right:18px;bottom:18px;z-index:100;background:#0f172a;color:#fff;padding:12px 14px;border-radius:12px;box-shadow:var(--shadow);display:none;max-width:380px}.toast.show{display:block}.toast.error{background:#991b1b}
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta content="#155e75" name="theme-color"/>
+  <title>
+   강동중 과학실 예약
+  </title>
+  <style>
+   :root{--bg:#f4f7fb;--card:#fff;--line:#dbe4ee;--text:#172033;--muted:#64748b;--primary:#155e75;--danger:#dc2626;--shadow:0 8px 28px rgba(15,23,42,.08)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR","Apple SD Gothic Neo",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{min-height:100vh;display:grid;grid-template-columns:180px 1fr}.sidebar{background:#0f172a;color:#fff;padding:20px 14px;position:sticky;top:0;height:100vh}.brand{font-size:20px;font-weight:900;line-height:1.4;margin:2px 6px 22px}.brand small{display:block;font-size:12px;color:#a8b6cb;font-weight:500;margin-top:6px}.room-tab,.side-btn{width:100%;border:0;border-radius:12px;padding:13px 12px;margin:5px 0;text-align:left;background:transparent;color:#dbe7f4;font-weight:800}.room-tab:hover,.side-btn:hover{background:rgba(255,255,255,.08)}.room-tab.active{background:#fff;color:#0f172a}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:#22c55e}.room-tab[data-room="과학2실"] .dot{background:#60a5fa}.sep{height:1px;background:rgba(255,255,255,.13);margin:16px 4px}.content{padding:22px;min-width:0}.topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}h1{font-size:25px;margin:0 0 5px}.subtitle{margin:0;color:var(--muted);font-size:14px}.status{padding:8px 11px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:800}.status.warn{background:#fff7ed;color:#b45309}.status.error{background:#fef2f2;color:#b91c1c}.notice{display:none;margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;line-height:1.5}.notice.show{display:block}.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px}.btn{border:1px solid var(--line);background:#fff;color:var(--text);padding:9px 12px;border-radius:10px;font-weight:800}.btn:hover{background:#f8fafc}.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}.btn.small{padding:6px 8px;font-size:12px}.week-label{font-weight:900;min-width:180px;text-align:center}.spacer{flex:1}input,select,textarea{width:100%;border:1px solid #cdd7e2;background:#fff;border-radius:10px;padding:10px 11px;color:var(--text)}textarea{min-height:92px;resize:vertical}.date-input{width:auto}.table-wrap{overflow:auto;border-top:1px solid var(--line)}table{width:100%;border-collapse:separate;border-spacing:0;min-width:900px}th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line)}th:last-child,td:last-child{border-right:0}thead th{background:#f8fafc;padding:11px 8px;text-align:center;font-size:13px;position:sticky;top:0;z-index:2}.period-head{width:76px}.period-cell{background:#fbfdff;text-align:center;font-weight:900;padding:12px 7px;white-space:nowrap}.slot{min-height:92px;padding:8px;background:#fff;display:flex;align-items:center;justify-content:center}.slot.today{box-shadow:inset 0 3px 0 #22c55e}.add-btn{width:42px;height:42px;border-radius:50%;border:1px dashed #94a3b8;background:#f8fafc;color:#64748b;font-size:25px;line-height:1}.add-btn:hover{background:#ecfeff;border-color:#0891b2;color:#0e7490}.reservation{width:100%;align-self:stretch;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px;font-size:12px;line-height:1.4;color:#1e3a8a}.reservation b{display:block;font-size:13px;margin-bottom:3px;color:#1e40af}.mobile-room-bar{display:none}.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal-backdrop.open{display:flex}.modal{width:min(620px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 25px 80px rgba(0,0,0,.28)}.modal.large{width:min(1000px,100%)}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}.modal-head h2{font-size:19px;margin:0}.x{border:0;background:transparent;font-size:25px;color:#64748b}.modal-body{padding:18px}.modal-actions{display:flex;gap:8px;justify-content:flex-end;padding:14px 18px;border-top:1px solid var(--line)}.summary{padding:11px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:12px;margin-bottom:14px;line-height:1.5}.field{margin-bottom:12px}.field label{display:block;font-size:12px;color:#475569;font-weight:900;margin:0 0 6px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mode-switch{display:flex;gap:8px;margin-bottom:14px}.mode-switch button{flex:1}.mode-switch .active{background:#ecfeff;border-color:#67e8f9;color:#155e75}.teacher-button-grid{display:flex;flex-wrap:wrap;gap:9px;margin:8px 0 14px}.teacher-choice{border:2px solid transparent;border-radius:999px;padding:9px 14px;font-weight:900;transition:.15s;box-shadow:0 2px 6px rgba(15,23,42,.08)}.teacher-choice:hover{transform:translateY(-1px);filter:brightness(.98)}.teacher-choice.active{outline:3px solid #0f172a;outline-offset:2px}.teacher-choice.c0{background:#dbeafe;color:#1e40af;border-color:#93c5fd}.teacher-choice.c1{background:#dcfce7;color:#166534;border-color:#86efac}.teacher-choice.c2{background:#fef3c7;color:#92400e;border-color:#fcd34d}.teacher-choice.c3{background:#fce7f3;color:#9d174d;border-color:#f9a8d4}.teacher-choice.c4{background:#ede9fe;color:#5b21b6;border-color:#c4b5fd}.teacher-choice.c5{background:#cffafe;color:#155e75;border-color:#67e8f9}.teacher-choice.c6{background:#ffedd5;color:#9a3412;border-color:#fdba74}.teacher-choice.c7{background:#e2e8f0;color:#334155;border-color:#94a3b8}.step-label{font-size:13px;font-weight:900;color:#334155;margin:4px 0 7px}.schedule-positive{background:#ecfdf5!important;border-color:#86efac!important;color:#166534!important}.schedule-negative{background:#fff7ed!important;border-color:#fed7aa!important;color:#9a3412!important}.slot-info{background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:11px 12px;margin-bottom:12px;color:#115e59;font-size:13px}.slot-info.empty{background:#f8fafc;border-color:var(--line);color:#64748b}.hint{font-size:12px;color:#64748b;line-height:1.5;margin-top:6px}.admin-section{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}.admin-section h3{margin:0 0 10px;font-size:16px}.admin-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.admin-row .grow{flex:1;min-width:220px}.teacher-list{display:grid;gap:8px;margin-top:12px}.teacher-item{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:#fbfdff}.teacher-meta{font-size:12px;color:#64748b;margin-top:3px}.preview{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:12px}.preview table{min-width:720px}.preview th,.preview td{padding:8px;font-size:12px;vertical-align:top}.preview-empty{padding:22px;text-align:center;color:#64748b}.toast{position:fixed;right:18px;bottom:18px;z-index:100;background:#0f172a;color:#fff;padding:12px 14px;border-radius:12px;box-shadow:var(--shadow);display:none;max-width:380px}.toast.show{display:block}.toast.error{background:#991b1b}
 @media(max-width:760px){.app{display:block}.sidebar{display:none}.content{padding:12px}.mobile-room-bar{display:flex;gap:8px;margin-bottom:10px}.mobile-room-bar .room-tab{margin:0;background:#e2e8f0;color:#334155;text-align:center}.mobile-room-bar .room-tab.active{background:#155e75;color:#fff}.week-label{order:-1;width:100%;text-align:left}.date-input{max-width:150px}.grid2{grid-template-columns:1fr}.teacher-item{grid-template-columns:1fr 1fr}.teacher-item .teacher-main{grid-column:1/-1}}
-</style>
-</head>
-<body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand">🧪 강동중 과학실 예약<small>Science Lab Reservation</small></div>
-    <button class="room-tab active" data-room="과학1실"><span class="dot"></span>과학1실</button>
-    <button class="room-tab" data-room="과학2실"><span class="dot"></span>과학2실</button>
-    <div class="sep"></div>
-    <button class="side-btn" id="refreshBtn">↻ 새로고침</button>
-    <button class="side-btn" id="adminBtn">⚙ 관리자</button>
-  </aside>
-  <main class="content">
-    <div class="mobile-room-bar"><button class="room-tab active" data-room="과학1실">과학1실</button><button class="room-tab" data-room="과학2실">과학2실</button></div>
-    <div class="topbar"><div><h1 id="pageTitle">강동중 과학실 예약 · 과학1실</h1><p class="subtitle">원하는 날짜와 교시의 + 버튼을 눌러 예약하세요.</p></div><div id="connectionStatus" class="status warn">설정 확인 중</div></div>
-    <div id="configNotice" class="notice"><b>Apps Script URL 설정이 필요합니다.</b><br>파일 하단의 <code>GOOGLE_APPS_SCRIPT_URL</code> 값을 배포한 Google Apps Script의 <code>/exec</code> 주소로 바꿔 주세요.</div>
-    <section class="panel"><div class="toolbar"><button class="btn" id="prevWeekBtn">← 이전 주</button><button class="btn" id="todayBtn">이번 주</button><button class="btn" id="nextWeekBtn">다음 주 →</button><span id="weekLabel" class="week-label"></span><span class="spacer"></span><input id="datePicker" class="date-input" type="date"></div><div id="scheduleArea" class="table-wrap"></div></section>
-  </main>
-</div>
-
-<div class="modal-backdrop" id="reservationModal"><div class="modal"><div class="modal-head"><h2>과학실 예약</h2><button class="x" data-close="reservationModal">×</button></div><div class="modal-body">
-  <div id="reservationSummary" class="summary"></div>
-  <div class="mode-switch"><button class="btn active" id="scheduleModeBtn">시간표에서 선택</button><button class="btn" id="manualModeBtn">직접 입력</button></div>
-  <div id="scheduledTeachersBox" class="slot-info empty">해당 시간의 교사 시간표를 확인합니다.</div>
-  <div id="scheduleModeFields"><div class="field"><label for="scheduledTeacherSelect">해당 시간에 수업이 있는 교사</label><select id="scheduledTeacherSelect"></select></div><div class="field"><label for="scheduledLessonSelect">수업 선택</label><select id="scheduledLessonSelect"></select></div><div class="hint">관리자 페이지에서 불러온 교사 시간표를 기준으로 표시됩니다.</div></div>
-  <div id="manualModeFields" style="display:none"><div class="grid2"><div class="field"><label for="manualTeacherInput">교사명</label><input id="manualTeacherInput" type="text" placeholder="예: 이정훈"></div><div class="field"><label for="manualSubjectInput">과목/수업명</label><input id="manualSubjectInput" type="text" placeholder="예: 과학, 물리"></div><div class="field"><label for="manualClassInput">학급</label><input id="manualClassInput" type="text" placeholder="예: 2-3"></div><div class="field"><label for="manualEtcInput">기타</label><input id="manualEtcInput" type="text" placeholder="선택 입력"></div></div></div>
-  <div class="field" style="margin-top:14px"><label for="experimentInput">실험 내용</label><textarea id="experimentInput" placeholder="예: 산-염기 중화 반응 실험, 현미경 관찰 등"></textarea></div>
-</div><div class="modal-actions"><button class="btn" data-close="reservationModal">취소</button><button class="btn primary" id="saveReservationBtn">예약하기</button></div></div></div>
-
-<div class="modal-backdrop" id="adminLoginModal"><div class="modal"><div class="modal-head"><h2>관리자 인증</h2><button class="x" data-close="adminLoginModal">×</button></div><div class="modal-body"><div class="field"><label for="adminPasswordInput">관리자 비밀번호</label><input id="adminPasswordInput" type="password" placeholder="비밀번호 입력"></div></div><div class="modal-actions"><button class="btn" data-close="adminLoginModal">취소</button><button class="btn primary" id="adminLoginBtn">확인</button></div></div></div>
-
-<div class="modal-backdrop" id="adminModal"><div class="modal large"><div class="modal-head"><h2>관리자 페이지</h2><button class="x" data-close="adminModal">×</button></div><div class="modal-body">
-  <div class="admin-section"><h3>현재 과학 교사 관리</h3><div class="admin-row"><div class="grow"><div class="hint">교사 이름은 Google Sheet의 시간표 탭 이름과 같아야 합니다.</div><input id="newTeacherInput" type="text" placeholder="교사 이름 입력"></div><button class="btn primary" id="addTeacherBtn">교사 추가</button><button class="btn" id="importAllBtn">전체 시간표 불러오기</button></div><div id="teacherList" class="teacher-list"></div></div>
-  <div class="admin-section"><h3>불러온 교사 시간표 미리보기</h3><div class="hint" style="margin-bottom:10px">교사 이름과 동일한 시트 탭을 찾아 요일/교시/수업 정보를 읽어옵니다.</div><div id="schedulePreview" class="preview"></div></div>
-  <div class="admin-section"><h3>예약 관리</h3><div class="admin-row" style="margin-bottom:10px"><select id="adminRoomFilter" style="width:auto"><option value="">전체 과학실</option><option value="과학1실">과학1실</option><option value="과학2실">과학2실</option></select><button class="btn" id="adminRefreshBtn">새로고침</button></div><div id="reservationAdminList" class="preview"></div></div>
-</div></div></div>
-<div id="toast" class="toast"></div>
-
-<script>
-'use strict';
-const GOOGLE_APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbxIS1lJApIerikFIscMayH0bI3PS2KlbYOv4sbRqbCWShr3CzF39_XJfkdUYIVLjUJ1/exec';
+  </style>
+ </head>
+ <body>
+  <div class="app">
+   <aside class="sidebar">
+    <div class="brand">
+     🧪 강동중 과학실 예약
+     <small>
+      Science Lab Reservation
+     </small>
+    </div>
+    <button class="room-tab active" data-room="과학1실">
+     <span class="dot">
+     </span>
+     과학1실
+    </button>
+    <button class="room-tab" data-room="과학2실">
+     <span class="dot">
+     </span>
+     과학2실
+    </button>
+    <div class="sep">
+    </div>
+    <button class="side-btn" id="refreshBtn">
+     ↻ 새로고침
+    </button>
+    <button class="side-btn" id="adminBtn">
+     ⚙ 관리자
+    </button>
+   </aside>
+   <main class="content">
+    <div class="mobile-room-bar">
+     <button class="room-tab active" data-room="과학1실">
+      과학1실
+     </button>
+     <button class="room-tab" data-room="과학2실">
+      과학2실
+     </button>
+    </div>
+    <div class="topbar">
+     <div>
+      <h1 id="pageTitle">
+       강동중 과학실 예약 · 과학1실
+      </h1>
+      <p class="subtitle">
+       원하는 날짜와 교시의 + 버튼을 눌러 예약하세요.
+      </p>
+     </div>
+     <div class="status warn" id="connectionStatus">
+      설정 확인 중
+     </div>
+    </div>
+    <div class="notice" id="configNotice">
+     <b>
+      Apps Script URL 설정이 필요합니다.
+     </b>
+     <br/>
+     파일 하단의
+     <code>
+      GOOGLE_APPS_SCRIPT_URL
+     </code>
+     값을 배포한 Google Apps Script의
+     <code>
+      /exec
+     </code>
+     주소로 바꿔 주세요.
+    </div>
+    <section class="panel">
+     <div class="toolbar">
+      <button class="btn" id="prevWeekBtn">
+       ← 이전 주
+      </button>
+      <button class="btn" id="todayBtn">
+       이번 주
+      </button>
+      <button class="btn" id="nextWeekBtn">
+       다음 주 →
+      </button>
+      <span class="week-label" id="weekLabel">
+      </span>
+      <span class="spacer">
+      </span>
+      <input class="date-input" id="datePicker" type="date"/>
+     </div>
+     <div class="table-wrap" id="scheduleArea">
+     </div>
+    </section>
+   </main>
+  </div>
+  <div class="modal-backdrop" id="reservationModal">
+   <div class="modal">
+    <div class="modal-head">
+     <h2>
+      과학실 예약
+     </h2>
+     <button class="x" data-close="reservationModal">
+      ×
+     </button>
+    </div>
+    <div class="modal-body">
+     <div class="summary" id="reservationSummary">
+     </div>
+     <div class="step-label">1. 교사를 먼저 선택하세요</div>
+     <div class="teacher-button-grid" id="teacherButtonGrid"></div>
+     <div class="slot-info empty" id="teacherScheduleStatus">
+      교사를 선택하면 이 시간에 수업이 있는지 확인합니다.
+     </div>
+     <div id="scheduledLessonFields" style="display:none">
+      <div class="field">
+       <label for="scheduledLessonSelect">2. 이 시간의 수업 선택</label>
+       <select id="scheduledLessonSelect"></select>
+      </div>
+     </div>
+     <div id="noClassFields" style="display:none">
+      <div class="step-label">2. 이 시간에는 수업이 없습니다. 예약할 수업 정보를 직접 입력하세요.</div>
+      <div class="grid2">
+       <div class="field">
+        <label for="manualSubjectInput">과목/수업명</label>
+        <input id="manualSubjectInput" placeholder="예: 과학, 물리" type="text"/>
+       </div>
+       <div class="field">
+        <label for="manualClassInput">학급</label>
+        <input id="manualClassInput" placeholder="예: 2-3" type="text"/>
+       </div>
+       <div class="field full">
+        <label for="manualEtcInput">기타</label>
+        <input id="manualEtcInput" placeholder="선택 입력" type="text"/>
+       </div>
+      </div>
+     </div>
+     <div class="field" style="margin-top:14px">
+      <label for="experimentInput">
+       실험 내용
+      </label>
+      <textarea id="experimentInput" placeholder="예: 산-염기 중화 반응 실험, 현미경 관찰 등"></textarea>
+     </div>
+    </div>
+    <div class="modal-actions">
+     <button class="btn" data-close="reservationModal">
+      취소
+     </button>
+     <button class="btn primary" id="saveReservationBtn">
+      예약하기
+     </button>
+    </div>
+   </div>
+  </div>
+  <div class="modal-backdrop" id="adminLoginModal">
+   <div class="modal">
+    <div class="modal-head">
+     <h2>
+      관리자 인증
+     </h2>
+     <button class="x" data-close="adminLoginModal">
+      ×
+     </button>
+    </div>
+    <div class="modal-body">
+     <div class="field">
+      <label for="adminPasswordInput">
+       관리자 비밀번호
+      </label>
+      <input id="adminPasswordInput" placeholder="비밀번호 입력" type="password"/>
+     </div>
+    </div>
+    <div class="modal-actions">
+     <button class="btn" data-close="adminLoginModal">
+      취소
+     </button>
+     <button class="btn primary" id="adminLoginBtn">
+      확인
+     </button>
+    </div>
+   </div>
+  </div>
+  <div class="modal-backdrop" id="adminModal">
+   <div class="modal large">
+    <div class="modal-head">
+     <h2>
+      관리자 페이지
+     </h2>
+     <button class="x" data-close="adminModal">
+      ×
+     </button>
+    </div>
+    <div class="modal-body">
+     <div class="admin-section">
+      <h3>
+       현재 과학 교사 관리
+      </h3>
+      <div class="admin-row">
+       <div class="grow">
+        <div class="hint">
+         교사 이름은 Google Sheet의 시간표 탭 이름과 같아야 합니다.
+        </div>
+        <input id="newTeacherInput" placeholder="교사 이름 입력" type="text"/>
+       </div>
+       <button class="btn primary" id="addTeacherBtn">
+        교사 추가
+       </button>
+       <button class="btn" id="importAllBtn">
+        전체 시간표 불러오기
+       </button>
+      </div>
+      <div class="teacher-list" id="teacherList">
+      </div>
+     </div>
+     <div class="admin-section">
+      <h3>
+       불러온 교사 시간표 미리보기
+      </h3>
+      <div class="hint" style="margin-bottom:10px">
+       교사 이름과 동일한 시트 탭을 찾아 요일/교시/수업 정보를 읽어옵니다.
+      </div>
+      <div class="preview" id="schedulePreview">
+      </div>
+     </div>
+     <div class="admin-section">
+      <h3>
+       예약 관리
+      </h3>
+      <div class="admin-row" style="margin-bottom:10px">
+       <select id="adminRoomFilter" style="width:auto">
+        <option value="">
+         전체 과학실
+        </option>
+        <option value="과학1실">
+         과학1실
+        </option>
+        <option value="과학2실">
+         과학2실
+        </option>
+       </select>
+       <button class="btn" id="adminRefreshBtn">
+        새로고침
+       </button>
+      </div>
+      <div class="preview" id="reservationAdminList">
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <div class="toast" id="toast">
+  </div>
+  <script>
+   'use strict';
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxOAmgN4pNpBh1MvfojjxXaqjAWwHpeQU5w7wDIHnV7WfkZfb9VyPXbbTIQYmvV4Hi7/exec';
 const DAYS=['월','화','수','목','금'];const MAX_PERIOD=7;
 let currentRoom='과학1실',currentMonday=getMonday(new Date()),reservations=[],teachers=[],importedSchedules=[],selectedSlot=null,slotOptions=[],reservationMode='schedule',adminPasswordSession='';
 const $=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0');
@@ -68,12 +277,98 @@ function updateHeader(){const end=addDays(currentMonday,4);$('weekLabel').textCo
 function getReservation(date,p){return reservations.find(r=>String(r.date)===date&&Number(r.period)===p&&String(r.room||'과학1실')===currentRoom)}
 function renderSchedule(){updateHeader();let h='<table><thead><tr><th class="period-head">교시</th>';for(let i=0;i<5;i++){const d=addDays(currentMonday,i);h+=`<th>${DAYS[i]}요일<br><span style="font-weight:500;color:#64748b">${pad(d.getMonth()+1)}/${pad(d.getDate())}</span></th>`}h+='</tr></thead><tbody>';const today=formatDate(new Date());for(let p=1;p<=MAX_PERIOD;p++){h+=`<tr><td class="period-cell">${p}교시</td>`;for(let i=0;i<5;i++){const date=formatDate(addDays(currentMonday,i)),r=getReservation(date,p);h+=`<td><div class="slot ${date===today?'today':''}">`;if(r){h+=`<div class="reservation"><b>${escapeHtml(r.teacher||'예약')}</b>`;const line=[r.subject,r.className].filter(Boolean).join(' · ');if(line)h+=escapeHtml(line);if(r.experiment)h+=`<br>${escapeHtml(r.experiment)}`;h+='</div>'}else h+=`<button class="add-btn" data-date="${date}" data-day="${i}" data-period="${p}" aria-label="예약">+</button>`;h+='</div></td>'}h+='</tr>'}h+='</tbody></table>';$('scheduleArea').innerHTML=h;document.querySelectorAll('.add-btn').forEach(b=>b.addEventListener('click',()=>openReservation(b.dataset.date,Number(b.dataset.day),Number(b.dataset.period))))}
 async function fetchInitData(show=false){updateHeader();if(!isConfigured()){$('configNotice').classList.add('show');setStatus('Apps Script URL 필요','warn');reservations=[];renderSchedule();return}$('configNotice').classList.remove('show');setStatus('불러오는 중','warn');try{const d=await apiGet('getInitData');reservations=d.reservations||[];teachers=d.teachers||[];importedSchedules=d.importedSchedules||[];renderSchedule();setStatus('연결됨');if(show)toast('새로고침했습니다.')}catch(e){console.error(e);setStatus('연결 오류','error');toast(e.message,true);renderSchedule()}}
-async function openReservation(date,dayIndex,period){if(!isConfigured()){toast('Apps Script URL을 먼저 설정해 주세요.',true);return}selectedSlot={date,dayIndex,period,room:currentRoom};$('reservationSummary').innerHTML=`<b>${escapeHtml(currentRoom)}</b><br>${date} (${DAYS[dayIndex]}요일) · ${period}교시`;$('experimentInput').value='';['manualTeacherInput','manualSubjectInput','manualClassInput','manualEtcInput'].forEach(id=>$(id).value='');setReservationMode('schedule');$('scheduledTeachersBox').className='slot-info empty';$('scheduledTeachersBox').textContent='해당 시간의 교사 시간표를 확인하고 있습니다.';$('scheduledTeacherSelect').innerHTML='<option>불러오는 중...</option>';$('scheduledLessonSelect').innerHTML='<option>교사를 먼저 선택하세요</option>';openModal('reservationModal');try{const d=await apiGet('getSlotOptions',{date,period});slotOptions=d.options||[];renderSlotOptions()}catch(e){slotOptions=[];renderSlotOptions();toast(e.message,true)}}
-function renderSlotOptions(){const names=[...new Set(slotOptions.map(x=>x.teacher).filter(Boolean))];if(!names.length){$('scheduledTeachersBox').className='slot-info empty';$('scheduledTeachersBox').innerHTML='이 시간에 등록된 수업이 없습니다. <b>직접 입력</b>으로 예약할 수 있습니다.';$('scheduledTeacherSelect').innerHTML='<option value="">해당 시간 수업 없음</option>';$('scheduledLessonSelect').innerHTML='<option value="">수업 없음</option>';return}$('scheduledTeachersBox').className='slot-info';$('scheduledTeachersBox').innerHTML=`해당 시간 수업 교사: <b>${names.map(escapeHtml).join(', ')}</b>`;$('scheduledTeacherSelect').innerHTML='<option value="">교사를 선택하세요</option>'+names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');$('scheduledLessonSelect').innerHTML='<option value="">교사를 먼저 선택하세요</option>'}
-$('scheduledTeacherSelect').addEventListener('change',()=>{const t=$('scheduledTeacherSelect').value,ls=slotOptions.filter(x=>x.teacher===t);$('scheduledLessonSelect').innerHTML='<option value="">수업을 선택하세요</option>'+ls.map((x,i)=>`<option value="${i}">${escapeHtml(x.subject||'수업')}${x.className?' · '+escapeHtml(x.className):''}</option>`).join('')})
-function setReservationMode(m){reservationMode=m;$('scheduleModeBtn').classList.toggle('active',m==='schedule');$('manualModeBtn').classList.toggle('active',m==='manual');$('scheduleModeFields').style.display=m==='schedule'?'block':'none';$('manualModeFields').style.display=m==='manual'?'block':'none'}
-$('scheduleModeBtn').addEventListener('click',()=>setReservationMode('schedule'));$('manualModeBtn').addEventListener('click',()=>setReservationMode('manual'));
-$('saveReservationBtn').addEventListener('click',async()=>{let teacher='',subject='',className='',etc='';if(reservationMode==='schedule'){teacher=$('scheduledTeacherSelect').value.trim();const idx=Number($('scheduledLessonSelect').value),lesson=slotOptions.filter(x=>x.teacher===teacher)[idx];if(!teacher||!lesson){toast('교사와 수업을 선택하거나 직접 입력을 이용해 주세요.',true);return}subject=lesson.subject||'';className=lesson.className||'';etc=lesson.raw||''}else{teacher=$('manualTeacherInput').value.trim();subject=$('manualSubjectInput').value.trim();className=$('manualClassInput').value.trim();etc=$('manualEtcInput').value.trim();if(!teacher){toast('교사명을 입력해 주세요.',true);return}}const experiment=$('experimentInput').value.trim();if(!experiment){toast('실험 내용을 입력해 주세요.',true);return}const b=$('saveReservationBtn');b.disabled=true;b.textContent='저장 중...';try{await apiPost('saveReservation',{...selectedSlot,teacher,subject,className,etc,experiment,entryMode:reservationMode});closeModal('reservationModal');await fetchInitData();toast('예약이 완료되었습니다.')}catch(e){toast(e.message,true)}finally{b.disabled=false;b.textContent='예약하기'}})
+async function openReservation(date,dayIndex,period){
+  if(!isConfigured()){toast('Apps Script URL을 먼저 설정해 주세요.',true);return}
+  selectedSlot={date,dayIndex,period,room:currentRoom};
+  selectedTeacher='';
+  slotOptions=[];
+  $('reservationSummary').innerHTML=`<b>${escapeHtml(currentRoom)}</b><br>${date} (${DAYS[dayIndex]}요일) · ${period}교시`;
+  $('experimentInput').value='';
+  ['manualSubjectInput','manualClassInput','manualEtcInput'].forEach(id=>$(id).value='');
+  $('scheduledLessonSelect').innerHTML='<option value="">교사를 먼저 선택하세요</option>';
+  $('scheduledLessonFields').style.display='none';
+  $('noClassFields').style.display='none';
+  $('teacherScheduleStatus').className='slot-info empty';
+  $('teacherScheduleStatus').textContent='교사를 선택하면 이 시간에 수업이 있는지 확인합니다.';
+  renderTeacherButtons();
+  openModal('reservationModal');
+  try{
+    const d=await apiGet('getSlotOptions',{date,period});
+    slotOptions=d.options||[];
+    if(selectedTeacher) showSelectedTeacherSchedule(selectedTeacher);
+  }catch(e){
+    slotOptions=[];
+    if(selectedTeacher) showSelectedTeacherSchedule(selectedTeacher);
+    toast(e.message,true);
+  }
+}
+
+function teacherColorIndex(name){
+  let hash=0;
+  for(const ch of String(name||'')) hash=(hash*31+ch.charCodeAt(0))>>>0;
+  return hash%8;
+}
+
+function renderTeacherButtons(){
+  const names=[...new Set((teachers||[]).map(t=>String(t.name||'').trim()).filter(Boolean))];
+  const box=$('teacherButtonGrid');
+  if(!names.length){
+    box.innerHTML='<div class="hint">등록된 과학 교사가 없습니다. 관리자 페이지에서 교사를 먼저 등록해 주세요.</div>';
+    return;
+  }
+  box.innerHTML=names.map(name=>`<button type="button" class="teacher-choice c${teacherColorIndex(name)}" data-teacher="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join('');
+  box.querySelectorAll('.teacher-choice').forEach(btn=>btn.addEventListener('click',()=>selectTeacher(btn.dataset.teacher)));
+}
+
+function selectTeacher(name){
+  selectedTeacher=name;
+  document.querySelectorAll('#teacherButtonGrid .teacher-choice').forEach(btn=>btn.classList.toggle('active',btn.dataset.teacher===name));
+  showSelectedTeacherSchedule(name);
+}
+
+function showSelectedTeacherSchedule(name){
+  const lessons=slotOptions.filter(x=>x.teacher===name);
+  const status=$('teacherScheduleStatus');
+  if(lessons.length){
+    status.className='slot-info schedule-positive';
+    status.innerHTML=`<b>${escapeHtml(name)}</b> 선생님은 이 시간에 <b>수업이 있습니다.</b>`;
+    $('scheduledLessonFields').style.display='block';
+    $('noClassFields').style.display='none';
+    $('scheduledLessonSelect').innerHTML='<option value="">수업을 선택하세요</option>'+lessons.map((x,i)=>`<option value="${i}">${escapeHtml(x.subject||'수업')}${x.className?' · '+escapeHtml(x.className):''}</option>`).join('');
+  }else{
+    status.className='slot-info schedule-negative';
+    status.innerHTML=`<b>${escapeHtml(name)}</b> 선생님은 이 시간에 등록된 수업이 없습니다. 그래도 과학실 예약은 가능합니다.`;
+    $('scheduledLessonFields').style.display='none';
+    $('scheduledLessonSelect').innerHTML='<option value="">수업 없음</option>';
+    $('noClassFields').style.display='block';
+  }
+}
+
+$('saveReservationBtn').addEventListener('click',async()=>{
+  if(!selectedTeacher){toast('교사를 먼저 선택해 주세요.',true);return}
+  let teacher=selectedTeacher,subject='',className='',etc='',entryMode='manual';
+  const lessons=slotOptions.filter(x=>x.teacher===selectedTeacher);
+  if(lessons.length){
+    const lessonValue=$('scheduledLessonSelect').value;
+    if(lessonValue===''){toast('이 시간의 수업을 선택해 주세요.',true);return}
+    const lesson=lessons[Number(lessonValue)];
+    if(!lesson){toast('선택한 수업 정보를 찾지 못했습니다.',true);return}
+    subject=lesson.subject||'';className=lesson.className||'';etc=lesson.raw||'';entryMode='schedule';
+  }else{
+    subject=$('manualSubjectInput').value.trim();
+    className=$('manualClassInput').value.trim();
+    etc=$('manualEtcInput').value.trim();
+    if(!subject){toast('수업이 없는 시간에는 과목/수업명을 직접 입력해 주세요.',true);return}
+  }
+  const experiment=$('experimentInput').value.trim();
+  if(!experiment){toast('실험 내용을 입력해 주세요.',true);return}
+  const b=$('saveReservationBtn');b.disabled=true;b.textContent='저장 중...';
+  try{
+    await apiPost('saveReservation',{...selectedSlot,teacher,subject,className,etc,experiment,entryMode});
+    closeModal('reservationModal');await fetchInitData();toast('예약이 완료되었습니다.');
+  }catch(e){toast(e.message,true)}
+  finally{b.disabled=false;b.textContent='예약하기'}
+});
 $('adminBtn').addEventListener('click',()=>{if(!isConfigured()){toast('Apps Script URL을 먼저 설정해 주세요.',true);return}$('adminPasswordInput').value='';openModal('adminLoginModal')});$('adminPasswordInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('adminLoginBtn').click()});$('adminLoginBtn').addEventListener('click',async()=>{const p=$('adminPasswordInput').value;if(!p){toast('비밀번호를 입력해 주세요.',true);return}try{const d=await apiPost('verifyAdmin',{password:p});if(!d.valid)throw new Error('관리자 비밀번호가 올바르지 않습니다.');adminPasswordSession=p;closeModal('adminLoginModal');await loadAdmin();openModal('adminModal')}catch(e){toast(e.message,true)}})
 async function loadAdmin(){const d=await apiPost('getAdminData',{password:adminPasswordSession});teachers=d.teachers||[];importedSchedules=d.importedSchedules||[];reservations=d.reservations||[];renderTeacherList();renderSchedulePreview();renderReservationAdmin();renderSchedule()}
 function renderTeacherList(){if(!teachers.length){$('teacherList').innerHTML='<div class="preview-empty">등록된 과학 교사가 없습니다.</div>';return}$('teacherList').innerHTML=teachers.map(t=>`<div class="teacher-item"><div class="teacher-main"><b>${escapeHtml(t.name)}</b><div class="teacher-meta">불러온 수업 ${Number(t.scheduleCount||0)}건${t.importedAt?' · '+escapeHtml(t.importedAt):''}</div></div><button class="btn small import-teacher" data-name="${escapeHtml(t.name)}">시간표 불러오기</button><button class="btn small preview-teacher" data-name="${escapeHtml(t.name)}">보기</button><button class="btn danger small delete-teacher" data-name="${escapeHtml(t.name)}">삭제</button></div>`).join('');document.querySelectorAll('.import-teacher').forEach(b=>b.addEventListener('click',()=>importTeacher(b.dataset.name)));document.querySelectorAll('.preview-teacher').forEach(b=>b.addEventListener('click',()=>renderSchedulePreview(b.dataset.name)));document.querySelectorAll('.delete-teacher').forEach(b=>b.addEventListener('click',()=>deleteTeacher(b.dataset.name)))}
@@ -88,6 +383,6 @@ $('adminRoomFilter').addEventListener('change',renderReservationAdmin);$('adminR
 document.querySelectorAll('.room-tab').forEach(b=>b.addEventListener('click',()=>{currentRoom=b.dataset.room;document.querySelectorAll('.room-tab').forEach(x=>x.classList.toggle('active',x.dataset.room===currentRoom));renderSchedule()}));$('prevWeekBtn').addEventListener('click',()=>{currentMonday=addDays(currentMonday,-7);renderSchedule()});$('nextWeekBtn').addEventListener('click',()=>{currentMonday=addDays(currentMonday,7);renderSchedule()});$('todayBtn').addEventListener('click',()=>{currentMonday=getMonday(new Date());renderSchedule()});$('datePicker').addEventListener('change',e=>{if(e.target.value){currentMonday=getMonday(parseDateLocal(e.target.value));renderSchedule()}});$('refreshBtn').addEventListener('click',()=>fetchInitData(true));document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
 window.addEventListener('error',e=>{console.error(e.error||e.message);setStatus('화면 오류','error')});window.addEventListener('unhandledrejection',e=>{console.error(e.reason);setStatus('통신 오류','error')});
 renderSchedule();fetchInitData();setInterval(()=>{if(document.visibilityState==='visible'&&isConfigured())fetchInitData()},60000);
-</script>
-</body>
+  </script>
+ </body>
 </html>
