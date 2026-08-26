@@ -397,7 +397,7 @@ function setSyncStatus(state, message) {
   }
 }
 
-let activeTeachers = ['이서연1','손아영','이정훈','정혜정'];
+let activeTeachers = ['이서연','손아영','이정훈','정혜정'];
 let timetables = {};
 let reservations = [];
 let currentMonday = getMonday(new Date());
@@ -923,103 +923,125 @@ async function syncTimetablesFromSheet() {
     return;
   }
 
-  const newTeachers = document.getElementById('inputTeachers').value
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean);
+  const newTeachers =
+    document.getElementById('inputTeachers')
+      .value
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
 
   if (newTeachers.length === 0) {
     alert('교사 이름을 1명 이상 입력하세요.');
     return;
   }
 
-  const button = document.getElementById('btnSync');
+  const button =
+    document.getElementById('btnSync');
+
   button.disabled = true;
-  button.innerText = '⏳ Google Sheet 분석 중...';
+  button.innerText =
+    '⏳ Google Sheet 시간표 읽는 중...';
 
   try {
-    const data = await apiGet('getRawSheets');
+    const data =
+      await apiPost(
+        'syncTimetables',
+        {
+          password:
+            adminSessionPassword,
+          activeTeachers:
+            newTeachers
+        }
+      );
 
-    const parsed = parseRawSheetsForTeachers(
-      data.rawSheets || [],
-      newTeachers
-    );
+    activeTeachers =
+      newTeachers;
 
-    activeTeachers = newTeachers;
-    timetables = {};
+    timetables =
+      data.timetables || {};
 
     let resultHtml =
       '<div class="font-bold text-teal-800 mb-2">분석 결과</div>' +
       '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
 
-    newTeachers.forEach(t => {
-      const item = parsed.results[t];
-
-      if (item && item.count > 0) {
-        timetables[t] = item.schedule;
-
-        resultHtml += `
-          <div class="p-2 bg-emerald-50 border border-emerald-200 rounded">
-            ✅ ${escapeHtml(t)}
-            <span class="float-right font-bold text-emerald-700">
-              ${item.count}시간
-            </span>
-            <div class="clear-both text-[9px] mt-1 text-emerald-700">
-              탭: ${escapeHtml(item.sheetName)}
-            </div>
-            <div class="text-[9px] mt-1 text-emerald-700">
-              매칭: ${escapeHtml(item.matchedBy || '자동')}
-            </div>
-          </div>`;
-      } else {
-        const reason = item ? item.reason : '분석 결과 없음';
-
-        resultHtml += `
-          <div class="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
-            ⚠️ ${escapeHtml(t)}
-            <span class="float-right text-[10px]">0시간</span>
-            ${item && item.sheetName
-              ? `<div class="clear-both text-[9px] mt-1 font-semibold">
-                   연결된 탭: ${escapeHtml(item.sheetName)}
-                 </div>`
-              : ''}
-            ${item && item.matchedBy
-              ? `<div class="text-[9px] mt-1">
-                   매칭 방식: ${escapeHtml(item.matchedBy)}
-                 </div>`
-              : ''}
-            <div class="text-[9px] mt-1">
-              ${escapeHtml(reason)}
-            </div>
-          </div>`;
-      }
-    });
+    (data.results || [])
+      .forEach(item => {
+        if (item.success) {
+          resultHtml += `
+            <div class="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-800">
+              ✅ ${escapeHtml(item.teacher)}
+              <span class="float-right font-bold">
+                ${Number(item.count || 0)}시간
+              </span>
+              <div class="clear-both text-[9px] mt-1">
+                탭: ${escapeHtml(item.sheetName)}
+              </div>
+              <div class="text-[9px] mt-1">
+                ${escapeHtml(item.matchedBy || '')}
+              </div>
+            </div>`;
+        } else {
+          resultHtml += `
+            <div class="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
+              ⚠️ ${escapeHtml(item.teacher)}
+              <span class="float-right">
+                0시간
+              </span>
+              <div class="clear-both text-[9px] mt-1">
+                ${item.sheetName
+                  ? '연결된 탭: ' + escapeHtml(item.sheetName)
+                  : '연결된 탭 없음'}
+              </div>
+              <div class="text-[9px] mt-1">
+                ${escapeHtml(item.reason || '')}
+              </div>
+            </div>`;
+        }
+      });
 
     resultHtml += '</div>';
 
-    await apiPost('saveSettings', {
-      password: adminSessionPassword,
-      activeTeachers,
-      timetables
-    });
+    const resultBox =
+      document.getElementById(
+        'syncResultBox'
+      );
 
-    const box = document.getElementById('syncResultBox');
-    box.innerHTML = resultHtml;
-    box.classList.remove('hidden');
+    resultBox.innerHTML =
+      resultHtml;
 
-    const diag = document.getElementById('sheetDiagnostics');
+    resultBox.classList
+      .remove('hidden');
 
-    diag.innerHTML =
-      `<div class="font-bold mb-1">실제 발견된 탭:</div>
-       <div class="break-words">${parsed.sheetNames.map(escapeHtml).join(' / ') || '없음'}</div>`;
+    const diagnostics =
+      document.getElementById(
+        'sheetDiagnostics'
+      );
+
+    diagnostics.innerHTML =
+      `<div class="font-bold mb-1">
+         실제 Google Sheet 탭:
+       </div>
+       <div class="break-words">
+         ${(data.sheetNames || [])
+           .map(escapeHtml)
+           .join(' / ')}
+       </div>`;
 
     await fetchInitData(true);
+
   } catch (error) {
     console.error(error);
-    alert('시간표 동기화 실패: ' + error.message);
+
+    alert(
+      '시간표 동기화 실패: ' +
+      String(
+        error.message || error
+      )
+    );
   } finally {
     button.disabled = false;
-    button.innerText = '🔍 시트 탭에서 시간표 자동 추출 및 저장';
+    button.innerText =
+      '🔍 시트 탭에서 시간표 자동 추출 및 저장';
   }
 }
 
