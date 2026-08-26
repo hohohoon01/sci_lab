@@ -228,6 +228,32 @@
             { bg: 'bg-indigo-50 hover:bg-indigo-100', border: 'border-indigo-300', text: 'text-indigo-900', badge: 'bg-indigo-500' }
         ];
 
+        // =========================================================================
+        // 🔧 날짜 유틸리티 함수 (원본 코드에서 누락되어 있던 부분 — 이 함수들이
+        //    없으면 아래 "let currentMonday = getMonday(...)" 줄에서
+        //    ReferenceError가 발생하며 전체 스크립트 실행이 멈춰버립니다.
+        //    → 첫 화면 로드 실패 + 관리자 인증 실패의 원인이었습니다.)
+        // =========================================================================
+        function getMonday(d) {
+            const date = new Date(d);
+            const day = date.getDay(); // 0(일) ~ 6(토)
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 일요일이면 -6
+            return new Date(date.getFullYear(), date.getMonth(), diff);
+        }
+
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
         let activeTeachers = ["이서연1", "손아영", "이정훈", "정혜정"];
         let timetables = {};
         let reservations = [];
@@ -257,8 +283,10 @@
                     reservations = data.reservations || [];
                     
                     document.getElementById('syncStatus').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-teal-300 mr-1"></span>실시간 동기화 완료';
-                    renderUI();
+                } else {
+                    document.getElementById('syncStatus').innerHTML = '<span class="text-red-300">동기화 실패 (서버 응답 오류)</span>';
                 }
+                renderUI();
             } catch (error) {
                 console.error("데이터 동기화 실패:", error);
                 document.getElementById('syncStatus').innerHTML = '<span class="text-red-300">동기화 실패 (새로고침 요망)</span>';
@@ -414,10 +442,14 @@
 
             // 서버 전송
             if(GOOGLE_APPS_SCRIPT_URL && !GOOGLE_APPS_SCRIPT_URL.includes("여기에")) {
-                await fetch(GOOGLE_APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'saveReservation', reservation: newRes })
-                });
+                try {
+                    await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'saveReservation', reservation: newRes })
+                    });
+                } catch(e) {
+                    console.error('서버 저장 실패:', e);
+                }
             }
             document.getElementById('btnSaveRes').innerText = "예약 확정";
         }
@@ -426,6 +458,7 @@
         function openDetailModal(id) {
             activeDetailId = id;
             const res = reservations.find(r => r.id === id);
+            if(!res) return;
             document.getElementById('detailDateTime').innerText = `${res.date} ${res.period}교시`;
             document.getElementById('detailTeacher').innerText = res.teacher;
             document.getElementById('detailClass').innerText = res.gradeClass;
@@ -442,10 +475,14 @@
             closeModal('modalDetail');
 
             if(GOOGLE_APPS_SCRIPT_URL && !GOOGLE_APPS_SCRIPT_URL.includes("여기에")) {
-                await fetch(GOOGLE_APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'deleteReservation', id: activeDetailId })
-                });
+                try {
+                    await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'deleteReservation', id: activeDetailId })
+                    });
+                } catch(e) {
+                    console.error('서버 삭제 실패:', e);
+                }
             }
             document.getElementById('btnDelRes').innerText = "🗑️ 예약 취소";
         }
@@ -593,8 +630,16 @@
         // 유틸
         function navigateWeek(d) { currentMonday = addDays(currentMonday, d); renderUI(); }
         function setThisWeek() { currentMonday = getMonday(new Date()); renderUI(); }
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+
+        // 날짜 선택기로 주간 이동
+        document.getElementById('datePicker').addEventListener('change', (e) => {
+            if(!e.target.value) return;
+            const picked = new Date(e.target.value + 'T00:00:00');
+            currentMonday = getMonday(picked);
+            renderUI();
+        });
 
         // 시작
         fetchInitData();
