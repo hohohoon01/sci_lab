@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧪 행복한 과학실 예약 시스템</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bg-grid-pattern {
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 bg-grid-pattern pb-12">
+
+    <!-- 헤더 -->
+    <header class="bg-gradient-to-r from-teal-600 via-emerald-600 to-green-600 text-white shadow-lg mb-4 sm:mb-6">
+        <div class="max-w-7xl mx-auto px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                
+                <!-- 로고 & 텍스트 -->
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <div class="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md flex-shrink-0 animate-bounce">
+                        <svg class="w-10 h-10 sm:w-12 sm:h-12 text-yellow-300 drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l2.828 2.828c1.464 1.465.426 3.972-1.64 3.972H7.226c-2.066 0-3.104-2.507-1.64-3.972l2.828-2.828A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-1.5">
+                            <span class="bg-yellow-300 text-teal-900 text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full">Science Lab</span>
+                            <span id="syncStatus" class="text-teal-100 text-[10px] sm:text-xs flex items-center">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-1 animate-pulse" id="syncDot"></span>데이터 연결 중...
+                            </span>
+                        </div>
+                        <h1 class="text-xl sm:text-3xl font-extrabold text-white mt-0.5 tracking-tight">🧪 행복한 과학실 사용 일정</h1>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between sm:justify-end gap-2 w-full md:w-auto">
+                    <!-- 요약 카드 -->
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-2 sm:p-3 border border-white/20 text-center px-4">
+                        <div class="text-[10px] text-teal-100">이번 주 예약</div>
+                        <div id="statTotal" class="text-lg font-black text-yellow-300">0건</div>
+                    </div>
+                    <!-- 관리자 버튼 -->
+                    <button onclick="openAdminAuthModal()" class="px-4 py-3 bg-slate-900/40 hover:bg-slate-900/60 text-yellow-300 font-bold text-xs rounded-xl border border-yellow-300/30 backdrop-blur-md transition">
+                        ⚙️ 시간표/교사 설정
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 -->
+    <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+        
+        <!-- 컨트롤 바 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 mb-4 flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="flex items-center justify-between w-full md:w-auto space-x-2">
+                <button onclick="navigateWeek(-7)" class="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-medium">◀ 이전 주</button>
+                <button onclick="setThisWeek()" class="px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-semibold shadow-sm">이번 주</button>
+                <button onclick="navigateWeek(7)" class="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-medium">다음 주 ▶</button>
+            </div>
+
+            <div class="flex items-center space-x-2 text-center">
+                <span id="currentWeekRange" class="text-sm sm:text-base font-bold text-slate-800">로딩중...</span>
+                <input type="date" id="datePicker" class="border border-slate-300 rounded-lg p-1 text-xs focus:ring-2 focus:ring-teal-500 cursor-pointer">
+            </div>
+
+            <!-- 동적 교사 범례 -->
+            <div id="teacherLegends" class="flex items-center justify-center flex-wrap gap-2 text-[11px] bg-slate-50 p-2 rounded-xl border border-slate-200 w-full md:w-auto">
+                <span class="font-semibold text-slate-500">과학과:</span>
+                <!-- JS 생성 -->
+            </div>
+        </div>
+
+        <!-- 시간표 그리드 -->
+        <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[650px] sm:min-w-[750px]">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 text-xs font-semibold border-b border-slate-200" id="tableHeader">
+                            <th class="p-2 sm:p-3 text-center w-16 sm:w-20 bg-slate-100 sticky left-0 z-20 border-r border-slate-200">교시</th>
+                            <!-- JS 생성 -->
+                        </tr>
+                    </thead>
+                    <tbody id="timetableBody" class="divide-y divide-slate-200 text-xs">
+                        <!-- JS 생성 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- 예약 모달 -->
+    <div id="modalReservation" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col">
+            <div class="bg-gradient-to-r from-teal-600 to-emerald-600 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-sm">🥼 과학실 사용 예약</h3>
+                <button onclick="closeModal('modalReservation')" class="text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-4 space-y-4 overflow-y-auto">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700 flex justify-between items-center">
+                    <span class="text-slate-400 text-[10px]">일시</span>
+                    <span id="modalTargetDateTime" class="font-bold text-slate-800 text-sm">--</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">1. 담당 교사 선택 <span class="text-red-500">*</span></label>
+                    <div id="teacherButtons" class="grid grid-cols-2 gap-2"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">2. 수업반 및 과목 <span class="text-red-500">*</span></label>
+                    <select id="selectClass" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-teal-500 bg-white">
+                        <option value="">교사를 선택해주세요</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">3. 실험 주제/메모 (선택)</label>
+                    <input type="text" id="inputTopic" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-teal-500">
+                </div>
+            </div>
+            <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end space-x-2">
+                <button onclick="closeModal('modalReservation')" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">취소</button>
+                <button onclick="saveReservation()" id="btnSaveRes" class="px-5 py-2 bg-teal-600 text-white rounded-xl text-xs font-bold">예약 확정</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 예약 상세 모달 -->
+    <div id="modalDetail" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-sm">🧪 과학실 예약 상세</h3>
+                <button onclick="closeModal('modalDetail')" class="text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-4 space-y-3 text-xs">
+                <div class="flex justify-between border-b pb-2"><span class="text-slate-400">일시</span><span id="detailDateTime" class="font-semibold">--</span></div>
+                <div class="flex justify-between border-b pb-2"><span class="text-slate-400">교사</span><span id="detailTeacher" class="font-bold text-teal-700 text-sm">--</span></div>
+                <div class="flex justify-between border-b pb-2"><span class="text-slate-400">학급/과목</span><span id="detailClass" class="font-semibold">--</span></div>
+                <div class="flex justify-between border-b pb-2"><span class="text-slate-400">주제</span><span id="detailTopic">--</span></div>
+            </div>
+            <div class="bg-slate-50 p-4 border-t flex justify-between">
+                <button onclick="deleteReservation()" id="btnDelRes" class="px-3 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl font-bold text-xs">🗑️ 예약 취소</button>
+                <button onclick="closeModal('modalDetail')" class="px-4 py-2 bg-slate-700 text-white rounded-xl font-semibold text-xs">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 인증 모달 -->
+    <div id="modalAdminAuth" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs overflow-hidden">
+            <div class="bg-slate-900 text-white p-4 text-center">
+                <h3 class="font-bold text-sm">🔐 관리자 인증</h3>
+            </div>
+            <div class="p-4 space-y-3">
+                <input type="password" id="adminPwInput" placeholder="비밀번호" class="w-full border p-2.5 text-center text-sm rounded-xl focus:ring-2 focus:ring-slate-800">
+            </div>
+            <div class="bg-slate-50 p-3 flex justify-end space-x-2">
+                <button onclick="closeModal('modalAdminAuth')" class="px-3 py-1.5 bg-slate-200 rounded-lg text-xs font-semibold">취소</button>
+                <button onclick="verifyAdmin()" class="px-4 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-bold">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 페이지 (교사 설정 & 시트 연동) -->
+    <div id="modalAdminSettings" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden max-h-[95vh] flex flex-col">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-sm">⚙️ 과학교사 및 시간표 동기화 설정</h3>
+                    <p class="text-[10px] text-slate-400">교사 이름 수정 및 구글 시트 탭(Sheet)에서 시간표를 자동 추출합니다.</p>
+                </div>
+                <button onclick="closeModal('modalAdminSettings')" class="text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-4 overflow-y-auto space-y-5 flex-1">
+                
+                <!-- 1. 과학교사 명단 설정 -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <label class="block text-xs font-bold text-slate-800 mb-1">1. 해당 학기 과학교사 명단 (콤마로 구분)</label>
+                    <p class="text-[10px] text-slate-500 mb-2">인사이동 발생 시 이곳의 이름만 변경하면 시간표와 연동됩니다.</p>
+                    <input type="text" id="inputTeachers" class="w-full border border-slate-300 p-2.5 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500" placeholder="예: 이서연1, 손아영, 정혜정, 이정훈">
+                </div>
+
+                <!-- 2. 시간표 연동 추출 -->
+                <div class="bg-teal-50 p-4 rounded-xl border border-teal-200">
+                    <h4 class="text-xs font-bold text-teal-900 mb-1">2. 구글 스프레드시트에서 시간표 긁어오기</h4>
+                    <p class="text-[11px] text-teal-700 mb-3">
+                        데이터베이스로 연결된 구글 시트 안의 <strong>모든 탭(Sheet)을 검색</strong>하여 위에서 설정한 교사 이름과 일치하는 <strong>1~7교시 시간표 정보(학년-반/과목)를 자동 추출하여 영구 저장</strong>합니다.
+                    </p>
+                    <button onclick="syncTimetablesFromSheet()" id="btnSync" class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center">
+                        🔍 시트 탭에서 시간표 자동 추출 및 저장하기
+                    </button>
+                    <!-- 추출 결과 화면 -->
+                    <div id="syncResultBox" class="hidden mt-3 p-3 bg-white border border-teal-300 rounded-lg text-xs"></div>
+                </div>
+
+            </div>
+            <div class="bg-slate-100 p-4 border-t flex justify-between">
+                <button onclick="changeAdminPassword()" class="px-3 py-2 bg-slate-700 text-white rounded-xl text-xs font-bold">🔑 암호 변경</button>
+                <button onclick="closeModal('modalAdminSettings')" class="px-5 py-2 bg-slate-300 text-slate-800 rounded-xl text-xs font-bold">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 스크립트 -->
+    <script>
+        // =========================================================================
+        // ⚠️ 필수 설정: 구글 Apps Script 웹 앱 URL을 아래에 반드시 붙여넣으세요!
+        // =========================================================================
+        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwf5RrRp9RLhEbAhef_DeMHO8krir58j6NtyeDorNT11uQCMycX5xm8smVKTPb6RdoI/exec";
+
+        // 기본 색상 팔레트 (교사 순서대로 매핑)
+        const PALETTE = [
+            { bg: 'bg-emerald-50 hover:bg-emerald-100', border: 'border-emerald-300', text: 'text-emerald-900', badge: 'bg-emerald-500' },
+            { bg: 'bg-sky-50 hover:bg-sky-100', border: 'border-sky-300', text: 'text-sky-900', badge: 'bg-sky-500' },
+            { bg: 'bg-purple-50 hover:bg-purple-100', border: 'border-purple-300', text: 'text-purple-900', badge: 'bg-purple-500' },
+            { bg: 'bg-amber-50 hover:bg-amber-100', border: 'border-amber-300', text: 'text-amber-900', badge: 'bg-amber-500' },
+            { bg: 'bg-rose-50 hover:bg-rose-100', border: 'border-rose-300', text: 'text-rose-900', badge: 'bg-rose-500' },
+            { bg: 'bg-indigo-50 hover:bg-indigo-100', border: 'border-indigo-300', text: 'text-indigo-900', badge: 'bg-indigo-500' }
+        ];
+
+        // =========================================================================
+        // 🔧 날짜 유틸리티 함수 (원본 코드에서 누락되어 있던 부분 — 이 함수들이
+        //    없으면 아래 "let currentMonday = getMonday(...)" 줄에서
+        //    ReferenceError가 발생하며 전체 스크립트 실행이 멈춰버립니다.
+        //    → 첫 화면 로드 실패 + 관리자 인증 실패의 원인이었습니다.)
+        // =========================================================================
+        function getMonday(d) {
+            const date = new Date(d);
+            const day = date.getDay(); // 0(일) ~ 6(토)
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 일요일이면 -6
+            return new Date(date.getFullYear(), date.getMonth(), diff);
+        }
+
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        let activeTeachers = ["이서연1", "손아영", "이정훈", "정혜정"];
+        let timetables = {};
+        let reservations = [];
+        let currentMonday = getMonday(new Date());
+        
+        let selectedSlot = null;
+        let selectedTeacher = null;
+        let activeDetailId = null;
+        let adminPassword = localStorage.getItem('sci_lab_admin_pw') || '1234';
+
+        // 1. 초기 데이터 로드 (구글 시트 연동)
+        async function fetchInitData() {
+            if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL.includes("여기에")) {
+                document.getElementById('syncStatus').innerHTML = '<span class="text-red-300">URL 설정 필요 (로컬 모드)</span>';
+                renderUI();
+                return;
+            }
+
+            try {
+                document.getElementById('syncDot').className = 'w-1.5 h-1.5 rounded-full bg-amber-400 mr-1 animate-pulse';
+                const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getInitData`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    activeTeachers = data.activeTeachers || activeTeachers;
+                    timetables = data.timetables || {};
+                    reservations = data.reservations || [];
+                    
+                    document.getElementById('syncStatus').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-teal-300 mr-1"></span>실시간 동기화 완료';
+                } else {
+                    document.getElementById('syncStatus').innerHTML = '<span class="text-red-300">동기화 실패 (서버 응답 오류)</span>';
+                }
+                renderUI();
+            } catch (error) {
+                console.error("데이터 동기화 실패:", error);
+                document.getElementById('syncStatus').innerHTML = '<span class="text-red-300">동기화 실패 (새로고침 요망)</span>';
+                renderUI();
+            }
+        }
+
+        function getTeacherColor(name) {
+            const idx = activeTeachers.indexOf(name);
+            return PALETTE[idx >= 0 ? idx % PALETTE.length : 0];
+        }
+
+        // 2. 메인 UI 렌더링 (범례, 테이블)
+        function renderUI() {
+            // 범례 업데이트
+            const legendDiv = document.getElementById('teacherLegends');
+            legendDiv.innerHTML = '<span class="font-semibold text-slate-500 mr-1">과학과:</span>';
+            activeTeachers.forEach(t => {
+                const color = getTeacherColor(t);
+                
+                // 시수 계산
+                let count = 0;
+                if(timetables[t]) {
+                    Object.values(timetables[t]).forEach(day => {
+                        Object.values(day).forEach(cls => { if(cls) count++; });
+                    });
+                }
+                legendDiv.innerHTML += `<span class="inline-flex items-center font-medium ${color.text} mr-2"><span class="w-2.5 h-2.5 rounded-full ${color.badge} mr-1"></span>${t}(${count})</span>`;
+            });
+
+            // 달력 헤더 업데이트
+            const fri = addDays(currentMonday, 4);
+            document.getElementById('currentWeekRange').innerText = `${currentMonday.getFullYear()}.${currentMonday.getMonth()+1}.${currentMonday.getDate()} ~ ${fri.getMonth()+1}.${fri.getDate()}`;
+            document.getElementById('datePicker').value = formatDate(currentMonday);
+
+            const dayNames = ['월', '화', '수', '목', '금'];
+            const thead = document.getElementById('tableHeader');
+            thead.innerHTML = '<th class="p-2 sm:p-3 text-center w-16 sm:w-20 bg-slate-100 sticky left-0 z-20 border-r border-slate-200">교시</th>';
+            for (let i = 0; i < 5; i++) {
+                const d = addDays(currentMonday, i);
+                const isToday = formatDate(d) === formatDate(new Date());
+                thead.innerHTML += `<th class="p-2 sm:p-3 text-center w-1/5 ${isToday ? 'bg-teal-50 text-teal-800' : ''}">${dayNames[i]} <span class="block text-[10px] sm:text-xs font-normal text-slate-500">${d.getMonth()+1}/${d.getDate()}</span></th>`;
+            }
+
+            // 그리드 렌더링
+            const tbody = document.getElementById('timetableBody');
+            tbody.innerHTML = '';
+            let totalRes = 0;
+
+            for (let period = 1; period <= 7; period++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-1.5 sm:p-2 text-center border-r border-slate-200 bg-slate-50 font-bold text-slate-800 text-xs sm:text-sm sticky left-0 z-10">${period}교시</td>`;
+                
+                for (let dayIdx = 0; dayIdx < 5; dayIdx++) {
+                    const dateStr = formatDate(addDays(currentMonday, dayIdx));
+                    const res = reservations.find(r => r.date === dateStr && r.period === period);
+                    const td = document.createElement('td');
+                    td.className = "p-1 sm:p-1.5 border-r border-b border-slate-200 h-16 sm:h-20 align-top";
+
+                    if (res) {
+                        totalRes++;
+                        const c = getTeacherColor(res.teacher);
+                        td.innerHTML = `
+                            <div onclick="openDetailModal('${res.id}')" class="w-full h-full p-1.5 sm:p-2 rounded-xl border ${c.border} ${c.bg} ${c.text} flex flex-col justify-between cursor-pointer">
+                                <div class="flex justify-between items-center"><span class="font-bold text-[11px] sm:text-xs"><span class="w-1.5 h-1.5 rounded-full ${c.badge} inline-block mr-1"></span>${res.teacher}</span></div>
+                                <div class="font-semibold text-[10px] sm:text-xs truncate text-slate-800">${res.gradeClass}</div>
+                                ${res.topic ? `<div class="text-[9px] sm:text-[10px] opacity-80 truncate">🔬 ${res.topic}</div>` : ''}
+                            </div>`;
+                    } else {
+                        td.innerHTML = `
+                            <button onclick="openReservationModal('${dateStr}', ${dayIdx}, ${period})" class="w-full h-full rounded-xl border border-dashed border-slate-200 hover:border-teal-400 hover:bg-teal-50/50 flex flex-col items-center justify-center text-slate-300 hover:text-teal-600 group">
+                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            </button>`;
+                    }
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+            document.getElementById('statTotal').innerText = `${totalRes}건`;
+        }
+
+        // 3. 예약 등록 모달
+        function openReservationModal(dateStr, dayIdx, period) {
+            selectedSlot = { dateStr, dayIdx, period };
+            selectedTeacher = null;
+            document.getElementById('modalTargetDateTime').innerText = `${dateStr} ${period}교시`;
+            document.getElementById('inputTopic').value = '';
+
+            const tBtns = document.getElementById('teacherButtons');
+            tBtns.innerHTML = '';
+            activeTeachers.forEach(t => {
+                const c = getTeacherColor(t);
+                tBtns.innerHTML += `<button onclick="selectTeacher('${t}', this)" class="p-2 sm:p-2.5 rounded-xl border border-slate-200 font-bold text-xs text-slate-700 hover:bg-slate-50 transition"><span class="w-2 h-2 rounded-full ${c.badge} inline-block mr-1"></span>${t}</button>`;
+            });
+
+            document.getElementById('selectClass').innerHTML = '<option value="">선생님을 선택하세요</option>';
+            openModal('modalReservation');
+        }
+
+        function selectTeacher(teacherName, btnEl) {
+            selectedTeacher = teacherName;
+            document.querySelectorAll('#teacherButtons button').forEach(b => b.classList.remove('ring-2', 'ring-teal-500', 'bg-teal-50'));
+            btnEl.classList.add('ring-2', 'ring-teal-500', 'bg-teal-50');
+
+            const sel = document.getElementById('selectClass');
+            sel.innerHTML = '';
+            
+            const schedule = timetables[teacherName] || {};
+            const scheduledClass = (schedule[selectedSlot.dayIdx] || {})[selectedSlot.period];
+
+            if (scheduledClass) {
+                sel.innerHTML += `<option value="${scheduledClass}" selected>⭐ [시간표 연동] ${scheduledClass}</option>`;
+            } else {
+                sel.innerHTML += `<option value="">ℹ️ 지정 수업 없음</option>`;
+            }
+
+            const otherClasses = new Set();
+            Object.values(schedule).forEach(day => Object.values(day).forEach(c => { if(c && c !== scheduledClass) otherClasses.add(c); }));
+            
+            if (otherClasses.size > 0) {
+                const grp = document.createElement('optgroup');
+                grp.label = "기타 등록 수업";
+                otherClasses.forEach(c => grp.innerHTML += `<option value="${c}">${c}</option>`);
+                sel.appendChild(grp);
+            }
+            sel.innerHTML += `<option value="CUSTOM">✏️ 직접 입력</option>`;
+        }
+
+        async function saveReservation() {
+            if(!selectedTeacher) return alert("교사를 선택하세요.");
+            let cls = document.getElementById('selectClass').value;
+            if(!cls) return alert("수업을 선택하세요.");
+            if(cls === 'CUSTOM') {
+                cls = prompt("수업/행사명 입력:");
+                if(!cls) return;
+            }
+
+            document.getElementById('btnSaveRes').innerText = "저장 중...";
+            
+            const newRes = {
+                id: 'R_' + Date.now(),
+                date: selectedSlot.dateStr,
+                period: selectedSlot.period,
+                teacher: selectedTeacher,
+                gradeClass: cls,
+                topic: document.getElementById('inputTopic').value.trim()
+            };
+
+            // 로컬 우선 반영
+            reservations.push(newRes);
+            renderUI();
+            closeModal('modalReservation');
+
+            // 서버 전송
+            if(GOOGLE_APPS_SCRIPT_URL && !GOOGLE_APPS_SCRIPT_URL.includes("여기에")) {
+                try {
+                    await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'saveReservation', reservation: newRes })
+                    });
+                } catch(e) {
+                    console.error('서버 저장 실패:', e);
+                }
+            }
+            document.getElementById('btnSaveRes').innerText = "예약 확정";
+        }
+
+        // 4. 예약 취소
+        function openDetailModal(id) {
+            activeDetailId = id;
+            const res = reservations.find(r => r.id === id);
+            if(!res) return;
+            document.getElementById('detailDateTime').innerText = `${res.date} ${res.period}교시`;
+            document.getElementById('detailTeacher').innerText = res.teacher;
+            document.getElementById('detailClass').innerText = res.gradeClass;
+            document.getElementById('detailTopic').innerText = res.topic || '-';
+            openModal('modalDetail');
+        }
+
+        async function deleteReservation() {
+            if(!confirm("예약을 삭제할까요?")) return;
+            document.getElementById('btnDelRes').innerText = "삭제 중...";
+            
+            reservations = reservations.filter(r => r.id !== activeDetailId);
+            renderUI();
+            closeModal('modalDetail');
+
+            if(GOOGLE_APPS_SCRIPT_URL && !GOOGLE_APPS_SCRIPT_URL.includes("여기에")) {
+                try {
+                    await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'deleteReservation', id: activeDetailId })
+                    });
+                } catch(e) {
+                    console.error('서버 삭제 실패:', e);
+                }
+            }
+            document.getElementById('btnDelRes').innerText = "🗑️ 예약 취소";
+        }
+
+        // 5. 관리자 기능 (시트에서 자동 추출)
+        function openAdminAuthModal() {
+            document.getElementById('adminPwInput').value = '';
+            openModal('modalAdminAuth');
+        }
+
+        function verifyAdmin() {
+            if(document.getElementById('adminPwInput').value === adminPassword) {
+                closeModal('modalAdminAuth');
+                document.getElementById('inputTeachers').value = activeTeachers.join(', ');
+                document.getElementById('syncResultBox').classList.add('hidden');
+                openModal('modalAdminSettings');
+            } else {
+                alert("비밀번호가 틀렸습니다.");
+            }
+        }
+
+        function changeAdminPassword() {
+            const newPw = prompt("새 암호 입력:");
+            if(newPw) {
+                adminPassword = newPw.trim();
+                localStorage.setItem('sci_lab_admin_pw', adminPassword);
+                alert("변경 완료");
+            }
+        }
+
+        // 핵심: 스프레드시트 모든 탭 데이터를 긁어와서 파싱
+        async function syncTimetablesFromSheet() {
+            const tInput = document.getElementById('inputTeachers').value;
+            const newTeachers = tInput.split(',').map(s => s.trim()).filter(Boolean);
+            if(newTeachers.length === 0) return alert("교사 이름을 1명 이상 입력하세요.");
+
+            const btn = document.getElementById('btnSync');
+            btn.innerHTML = "⏳ 구글 시트의 모든 탭 분석 중... (수 초 소요)";
+            btn.disabled = true;
+
+            try {
+                // 1. 시트 데이터 긁어오기
+                const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getRawSheets`);
+                const data = await response.json();
+                
+                if(!data.success) throw new Error("데이터 수신 실패");
+
+                // 2. 브라우저에서 데이터 분석 (학년-반 추출 로직)
+                const parsedResults = parseRawSheetsForTeachers(data.rawSheets, newTeachers);
+                
+                // 3. 추출된 결과 합치기
+                activeTeachers = newTeachers;
+                timetables = {};
+                
+                let resultHtml = `<div class="font-bold text-teal-800 mb-2">분석 완료 (추출된 시수)</div><div class="grid grid-cols-2 gap-2">`;
+                
+                newTeachers.forEach(t => {
+                    const count = parsedResults[t] ? parsedResults[t].count : 0;
+                    if(count > 0) {
+                        timetables[t] = parsedResults[t].schedule;
+                        resultHtml += `<div class="p-2 bg-emerald-50 border border-emerald-200 rounded">✅ ${t} <span class="float-right font-bold text-emerald-700">${count}시간</span></div>`;
+                    } else {
+                        resultHtml += `<div class="p-2 bg-slate-50 border border-slate-200 rounded text-slate-500">⚠️ ${t} <span class="float-right text-xs">발견못함</span></div>`;
+                    }
+                });
+                resultHtml += `</div>`;
+
+                // 4. 구글 시트 AppConfig에 최종 세팅 영구 저장
+                await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'saveSettings', activeTeachers, timetables })
+                });
+
+                // UI 업데이트
+                const resBox = document.getElementById('syncResultBox');
+                resBox.innerHTML = resultHtml;
+                resBox.classList.remove('hidden');
+                
+                renderUI(); // 메인화면 갱신
+
+            } catch (err) {
+                console.error(err);
+                alert("연동 중 에러가 발생했습니다. 구글 앱스 스크립트 설정을 확인해주세요.");
+            }
+            
+            btn.innerHTML = "🔍 시트 탭에서 시간표 자동 추출 및 저장하기";
+            btn.disabled = false;
+        }
+
+        // 학년-반 과목 추출 파서
+        function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
+            const results = {};
+            targetTeachers.forEach(t => results[t] = { count: 0, schedule: {0:{}, 1:{}, 2:{}, 3:{}, 4:{}} });
+            const dayNames = ['월','화','수','목','금'];
+
+            function formatClassData(text) {
+                if(!text) return '';
+                let lines = text.split(/[\r\n,]+/).map(s=>s.trim()).filter(Boolean);
+                let gc = '', subj = [];
+                lines.forEach(item => {
+                    const m = item.match(/([1-3])\s*[-학년]\s*([0-9]{1,2})\s*반?/);
+                    if(m) gc = `${m[1]}-${m[2]}`;
+                    else if(!gc && item.match(/^[1-3][0-9]{2}$/)) gc = `${item.charAt(0)}-${parseInt(item.substring(1),10)}`;
+                    else subj.push(item);
+                });
+                return gc && subj.length ? `${gc} ${subj.join(' ')}` : (gc || text.replace(/[\r\n]+/g, ' '));
+            }
+
+            rawSheets.forEach(sheet => {
+                const rows = sheet.values;
+                // 매트릭스 탐색
+                targetTeachers.forEach(t => {
+                    let tRow = -1, tCol = -1;
+                    for(let r=0; r<rows.length; r++) {
+                        for(let c=0; c<rows[r].length; c++) {
+                            if(String(rows[r][c]).replace(/\s/g,'').includes(t)) { tRow=r; tCol=c; break; }
+                        }
+                        if(tRow!==-1) break;
+                    }
+                    if(tRow !== -1) {
+                        const h1 = rows[Math.max(0, tRow-2)] || [];
+                        const h2 = rows[Math.max(0, tRow-1)] || [];
+                        const targetRow = rows[tRow];
+                        
+                        for(let c=0; c<targetRow.length; c++) {
+                            const val = formatClassData(String(targetRow[c]));
+                            if(!val || val==='-' || c===tCol) continue;
+                            const head = (String(h1[c]||'') + String(h2[c]||'')).replace(/\s/g,'');
+                            
+                            dayNames.forEach((dName, dIdx) => {
+                                for(let p=1; p<=7; p++) {
+                                    if(head.includes(`${dName}${p}`) || (head.includes(dName) && head.includes(`${p}교시`))) {
+                                        results[t].schedule[dIdx][p] = val;
+                                        results[t].count++;
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+            return results;
+        }
+
+        // 유틸
+        function navigateWeek(d) { currentMonday = addDays(currentMonday, d); renderUI(); }
+        function setThisWeek() { currentMonday = getMonday(new Date()); renderUI(); }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+
+        // 날짜 선택기로 주간 이동
+        document.getElementById('datePicker').addEventListener('change', (e) => {
+            if(!e.target.value) return;
+            const picked = new Date(e.target.value + 'T00:00:00');
+            currentMonday = getMonday(picked);
+            renderUI();
+        });
+
+        // 시작
+        fetchInitData();
+        // 30초 동기화
+        setInterval(fetchInitData, 30000);
+
+    </script>
+</body>
+</html>
