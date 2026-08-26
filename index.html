@@ -269,7 +269,7 @@
         </p>
         <input type="text" id="inputTeachers"
           class="w-full border border-slate-300 p-3 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500"
-          placeholder="예: 이서연1, 손아영, 이정훈, 정혜정">
+          placeholder="예: 이서연, 손아영, 이정훈, 정혜정">
       </div>
 
       <div class="bg-teal-50 p-4 rounded-xl border border-teal-200">
@@ -296,19 +296,14 @@
 
     </div>
 
-    <div class="bg-slate-100 p-4 border-t flex flex-wrap justify-between gap-2 safe-bottom">
-      <button onclick="changeAdminPassword()"
-        class="px-3 py-2.5 bg-slate-700 text-white rounded-xl text-xs font-bold">
-        🔑 암호 변경
+    <!-- 하단 영역 (암호 변경 버튼 제거됨) -->
+    <div class="bg-slate-100 p-4 border-t flex flex-wrap justify-end gap-2 safe-bottom">
+      <button onclick="closeModal('modalAdminSettings')" class="px-5 py-2.5 bg-slate-300 text-slate-800 rounded-xl text-xs font-bold">
+        닫기
       </button>
-      <div class="flex gap-2">
-        <button onclick="closeModal('modalAdminSettings')" class="px-5 py-2.5 bg-slate-300 text-slate-800 rounded-xl text-xs font-bold">
-          닫기
-        </button>
-        <button onclick="saveAdminSettings()" id="btnSaveAdmin" class="hidden px-5 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-bold">
-          💾 설정 저장
-        </button>
-      </div>
+      <button onclick="saveAdminSettings()" id="btnSaveAdmin" class="hidden px-5 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-bold">
+        💾 설정 저장
+      </button>
     </div>
   </div>
 </div>
@@ -381,7 +376,6 @@ let timetables = {};
 let reservations = [];
 let currentMonday = getMonday(new Date());
 let currentRoom = ROOMS[0];
-let rawSheetsData = []; // 서버에서 읽어온 시트 데이터 로컬 보관용
 
 let selectedSlot = null;
 let selectedTeacher = null;
@@ -418,12 +412,12 @@ async function apiPost(action, payload = {}) {
   return data;
 }
 
+// 초기 로딩용 (무거운 데이터는 제외됨)
 async function fetchInitData(silent = false) {
   try {
     setSyncStatus('loading', '공유 데이터 동기화 중...');
     const data = await apiGet('getInitData');
 
-    rawSheetsData = data.rawSheets || [];
     activeTeachers = Array.isArray(data.activeTeachers) ? data.activeTeachers : activeTeachers;
     timetables = data.timetables || {};
     reservations = Array.isArray(data.reservations) ? data.reservations : [];
@@ -711,13 +705,19 @@ function openDetailModal(id) {
 async function deleteReservation() {
   if (!activeDetailId) return;
   if (!confirm('예약을 삭제할까요?')) return;
+  
+  let pwd = adminSessionPassword;
+  if (!pwd) {
+    pwd = prompt('예약을 취소하려면 관리자(또는 등록) 비밀번호를 입력하세요.');
+    if (!pwd) return; 
+  }
 
   const button = document.getElementById('btnDelRes');
   button.disabled = true;
   button.innerText = '삭제 중...';
 
   try {
-    await apiPost('deleteReservation', { id: activeDetailId, password: adminSessionPassword });
+    await apiPost('deleteReservation', { id: activeDetailId, password: pwd });
     closeModal('modalDetail');
     await fetchInitData(true);
   } catch (error) {
@@ -757,24 +757,7 @@ async function verifyAdmin() {
   }
 }
 
-async function changeAdminPassword() {
-  if (!adminSessionPassword) { alert('관리자 인증이 필요합니다.'); return; }
-  const newPassword = prompt('새 관리자 암호를 입력하세요.');
-  if (!newPassword || newPassword.trim().length < 4) { alert('4자 이상 입력하세요.'); return; }
-
-  try {
-    await apiPost('changeAdminPassword', {
-      password: adminSessionPassword,
-      newPassword: newPassword.trim()
-    });
-    adminSessionPassword = newPassword.trim();
-    alert('관리자 암호가 변경되었습니다.');
-  } catch (error) {
-    alert('암호 변경 실패: ' + error.message);
-  }
-}
-
-/* 시간표 동기화 - 프론트엔드 파싱 */
+/* 시간표 동기화 - 관리자가 요청 시에만 시트 데이터를 불러와 정밀 분석 */
 async function syncTimetablesFromSheet() {
   if (!adminSessionPassword) { alert('관리자 인증이 필요합니다.'); return; }
   
@@ -783,10 +766,18 @@ async function syncTimetablesFromSheet() {
 
   const button = document.getElementById('btnSync');
   button.disabled = true;
-  button.innerText = '⏳ 로컬 데이터 분석 중...';
+  button.innerText = '⏳ 구글 시트 데이터 불러오는 중...'; 
 
   try {
-    const parsedData = parseRawSheetsForTeachers(rawSheetsData, newTeachers);
+    const rawDataResponse = await apiPost('getRawSheets', { password: adminSessionPassword });
+    const fetchedRawSheets = rawDataResponse.rawSheets || [];
+
+    button.innerText = '⏳ 데이터 정밀 분석 중...';
+    
+    // UI 반영 시간을 잠시 확보
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    const parsedData = parseRawSheetsForTeachers(fetchedRawSheets, newTeachers);
     
     let newTimetables = {};
     let resultHtml = '<div class="font-bold text-teal-800 mb-2">분석 결과</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
@@ -822,23 +813,21 @@ async function syncTimetablesFromSheet() {
     const diagnostics = document.getElementById('sheetDiagnostics');
     diagnostics.innerHTML = `<div class="font-bold mb-1">실제 Google Sheet 탭:</div><div class="break-words">${(parsedData.sheetNames || []).map(escapeHtml).join(' / ')}</div>`;
 
-    // 미리보기 상태 저장
     window.previewTeachers = newTeachers;
     window.previewTimetables = newTimetables;
 
-    // 설정 저장 버튼 활성화
     document.getElementById('btnSaveAdmin').classList.remove('hidden');
 
   } catch (error) {
     console.error(error);
-    alert('시간표 분석 실패: ' + String(error.message || error));
+    alert('시간표 동기화 실패: ' + String(error.message || error));
   } finally {
     button.disabled = false;
     button.innerText = '🔍 시트 탭에서 시간표 자동 추출';
   }
 }
 
-// 저장 버튼 기능 추가
+// 설정 저장 버튼
 async function saveAdminSettings() {
   if (!adminSessionPassword) return;
 
@@ -864,14 +853,12 @@ async function saveAdminSettings() {
   } finally {
     btn.disabled = false;
     btn.innerText = '💾 설정 저장';
-    btn.classList.add('hidden'); // 저장 후 다시 숨김
+    btn.classList.add('hidden');
   }
 }
 
-
-/* 프론트엔드 파서 함수 (기존 코드 유지) */
+/* 개선된 프론트엔드 파서 함수 (다양한 요일/교시 입력 형태 대응) */
 function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
-  const dayNames = ['월','화','수','목','금'];
   function cleanText(value) { return String(value ?? '').replace(/\u200B/g, '').replace(/\uFEFF/g, '').replace(/\r/g, '').trim(); }
   function compact(value) { return cleanText(value).replace(/\s+/g, '').replace(/[·._()[\]{}\-]/g, ''); }
   function teacherKey(value) { return compact(value).replace(/선생님/g, '').replace(/교사/g, '').replace(/시간표/g, '').replace(/담당/g, ''); }
@@ -909,18 +896,25 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     return { sheet: null, matchedBy: '' };
   }
 
+  // 📌 요일 파싱 로직 한층 강화 ("(월)", "월요일" 등 완벽 인식)
   function dayIndexFromCell(value) {
-    const text = compact(value).replace(/요일/g, '').replace(/曜/g, '');
-    const first = text.charAt(0);
-    const idx = dayNames.indexOf(first);
-    return idx >= 0 ? idx : -1;
+    const text = String(value ?? '').replace(/\s/g, '');
+    if (/^월(요일)?$/.test(text) || text.includes('(월)')) return 0;
+    if (/^화(요일)?$/.test(text) || text.includes('(화)')) return 1;
+    if (/^수(요일)?$/.test(text) || text.includes('(수)')) return 2;
+    if (/^목(요일)?$/.test(text) || text.includes('(목)')) return 3;
+    if (/^금(요일)?$/.test(text) || text.includes('(금)')) return 4;
+    return -1;
   }
 
+  // 📌 교시 파싱 로직 강화 ("1", "1교시", "[1]", "(1)" 완벽 인식)
   function periodFromCell(value) {
-    const text = cleanText(value);
-    let m = text.match(/^\s*([1-7])\s*(?:교시)?\s*$/);
+    const text = String(value ?? '').trim();
+    let m = text.match(/^([1-9]|10)\s*교시$/);
     if (m) return Number(m[1]);
-    m = text.match(/(?:^|\s)([1-7])\s*교시(?:\s|$)/);
+    m = text.match(/^([1-9]|10)$/);
+    if (m) return Number(m[1]);
+    m = text.match(/^[\[\(]([1-9]|10)[\]\)]$/);
     if (m) return Number(m[1]);
     return null;
   }
@@ -953,7 +947,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     const found = findTeacherSheet(teacher);
     const sheet = found.sheet;
     if (!sheet) {
-      results[teacher] = { count: 0, schedule: {0:{},1:{},2:{},3:{},4:{}}, sheetName: '', matchedBy: '', reason: '교사명과 연결되는 탭을 찾지 못함. 아래 실제 탭 목록을 확인하세요.' };
+      results[teacher] = { count: 0, schedule: {0:{},1:{},2:{},3:{},4:{}}, sheetName: '', matchedBy: '', reason: '교사명과 일치하는 탭을 찾지 못함. 아래 실제 탭 목록 확인.' };
       return;
     }
 
@@ -976,7 +970,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     }
 
     if (headerRow < 0) {
-      results[teacher] = { count: 0, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: `탭 "${sheet.name}"은 찾았지만 월~금 요일 머리글을 찾지 못함` };
+      results[teacher] = { count: 0, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: `"${sheet.name}" 탭에서 '월, 화, 수...' 요일 머리글을 찾지 못함` };
       return;
     }
 
@@ -1007,7 +1001,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
         if (display) { schedule[dayIdx][period] = display; count++; }
       });
     }
-    results[teacher] = { count, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: count > 0 ? '정상 추출' : (periodRows === 0 ? `탭 "${sheet.name}"에서 요일은 찾았지만 1~7교시 행을 찾지 못함` : `탭 "${sheet.name}"에서 요일/교시는 찾았지만 수업 셀을 읽지 못함`) };
+    results[teacher] = { count, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: count > 0 ? '정상 추출' : (periodRows === 0 ? `"${sheet.name}" 탭에서 1~7교시 행을 찾지 못함` : `"${sheet.name}" 탭에서 요일/교시는 찾았지만 내용이 비어있음`) };
   });
 
   return { results, sheetNames };
