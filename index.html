@@ -162,44 +162,35 @@
         <div id="teacherButtons" class="grid grid-cols-2 gap-2"></div>
       </div>
 
-      <div id="teacherScheduleInfo"
-        class="hidden p-3 rounded-xl text-xs border">
-      </div>
+      <div id="teacherScheduleInfo" class="hidden p-3 rounded-xl text-xs border"></div>
 
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1.5">
           2. 수업반 및 과목 <span class="text-red-500">*</span>
         </label>
-        <select id="selectClass"
-          class="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-teal-500 bg-white">
+        <select id="selectClass" class="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-teal-500 bg-white">
           <option value="">교사를 선택해주세요</option>
         </select>
       </div>
 
       <div id="customClassBox" class="hidden">
         <label class="block text-xs font-bold text-slate-700 mb-1.5">수업/행사 직접 입력</label>
-        <input type="text" id="inputCustomClass"
-          class="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-teal-500"
-          placeholder="예: 2-3 과학 / 동아리 / 행사">
+        <input type="text" id="inputCustomClass" class="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-teal-500" placeholder="예: 2-3 과학 / 동아리 / 행사">
       </div>
 
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">
           3. 실험 내용 / 메모
         </label>
-        <textarea id="inputTopic" rows="3"
-          class="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-teal-500"
-          placeholder="예: 산-염기 중화 반응 실험"></textarea>
+        <textarea id="inputTopic" rows="3" class="w-full border border-slate-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-teal-500" placeholder="예: 산-염기 중화 반응 실험"></textarea>
       </div>
     </div>
 
     <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end space-x-2 sticky bottom-0 safe-bottom">
-      <button onclick="closeModal('modalReservation')"
-        class="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">
+      <button onclick="closeModal('modalReservation')" class="px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">
         취소
       </button>
-      <button onclick="saveReservation()" id="btnSaveRes"
-        class="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-bold">
+      <button onclick="saveReservation()" id="btnSaveRes" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-bold">
         예약 확정
       </button>
     </div>
@@ -223,12 +214,10 @@
     </div>
 
     <div class="bg-slate-50 p-4 border-t flex justify-between safe-bottom">
-      <button onclick="deleteReservation()" id="btnDelRes"
-        class="px-3 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl font-bold text-xs">
+      <button onclick="deleteReservation()" id="btnDelRes" class="px-3 py-2.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl font-bold text-xs">
         🗑️ 예약 취소
       </button>
-      <button onclick="closeModal('modalDetail')"
-        class="px-4 py-2.5 bg-slate-700 text-white rounded-xl font-semibold text-xs">
+      <button onclick="closeModal('modalDetail')" class="px-4 py-2.5 bg-slate-700 text-white rounded-xl font-semibold text-xs">
         닫기
       </button>
     </div>
@@ -248,12 +237,10 @@
     </div>
 
     <div class="bg-slate-50 p-3 flex justify-end space-x-2">
-      <button onclick="closeModal('modalAdminAuth')"
-        class="px-3 py-2 bg-slate-200 rounded-lg text-xs font-semibold">
+      <button onclick="closeModal('modalAdminAuth')" class="px-3 py-2 bg-slate-200 rounded-lg text-xs font-semibold">
         취소
       </button>
-      <button onclick="verifyAdmin()"
-        class="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold">
+      <button onclick="verifyAdmin()" class="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold">
         확인
       </button>
     </div>
@@ -286,20 +273,16 @@
       </div>
 
       <div class="bg-teal-50 p-4 rounded-xl border border-teal-200">
-        <h4 class="text-xs font-bold text-teal-900 mb-1">
+        <h4 class="text-xs font-bold text-teal-900 mb-3">
           2. Google Sheet에서 시간표 읽어오기
         </h4>
-        <p class="text-[11px] text-teal-700 mb-3">
-          <b>월/월요일</b>, <b>1/1교시</b>, 셀 줄바꿈, 공백을 모두 인식하도록 파서를 보강했습니다.
-        </p>
 
         <button onclick="syncTimetablesFromSheet()" id="btnSync"
           class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md transition">
-          🔍 시트 탭에서 시간표 자동 추출 및 저장
+          🔍 시트 탭에서 시간표 자동 추출
         </button>
 
-        <div id="syncResultBox"
-          class="hidden mt-3 p-3 bg-white border border-teal-300 rounded-lg text-xs">
+        <div id="syncResultBox" class="hidden mt-3 p-3 bg-white border border-teal-300 rounded-lg text-xs">
         </div>
       </div>
 
@@ -318,10 +301,14 @@
         class="px-3 py-2.5 bg-slate-700 text-white rounded-xl text-xs font-bold">
         🔑 암호 변경
       </button>
-      <button onclick="closeModal('modalAdminSettings')"
-        class="px-5 py-2.5 bg-slate-300 text-slate-800 rounded-xl text-xs font-bold">
-        닫기
-      </button>
+      <div class="flex gap-2">
+        <button onclick="closeModal('modalAdminSettings')" class="px-5 py-2.5 bg-slate-300 text-slate-800 rounded-xl text-xs font-bold">
+          닫기
+        </button>
+        <button onclick="saveAdminSettings()" id="btnSaveAdmin" class="hidden px-5 py-2.5 bg-teal-600 text-white rounded-xl text-xs font-bold">
+          💾 설정 저장
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -329,6 +316,7 @@
 <script>
 'use strict';
 
+// ★ 여기에 본인의 구글 스크립트 웹앱 주소를 입력하세요.
 const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPQKa3dTJmKBln4S7m3bPy7rhUtwQPimgS5F8LQ6e9iCdQdMI9utfAImhn4FX3JJvi/exec';
 const ROOMS = ['과학1실', '과학2실'];
 
@@ -375,26 +363,17 @@ function setSyncStatus(state, message) {
   const status = document.getElementById('syncStatus');
 
   if (!status) return;
-
   if (dot) {
     if (state === 'loading') {
-      dot.className =
-        'w-1.5 h-1.5 rounded-full bg-amber-400 mr-1 animate-pulse flex-shrink-0';
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 mr-1 animate-pulse flex-shrink-0';
     } else if (state === 'ok') {
-      dot.className =
-        'w-1.5 h-1.5 rounded-full bg-teal-300 mr-1 flex-shrink-0';
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-teal-300 mr-1 flex-shrink-0';
     } else {
-      dot.className =
-        'w-1.5 h-1.5 rounded-full bg-red-300 mr-1 flex-shrink-0';
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-red-300 mr-1 flex-shrink-0';
     }
   }
-
-  if (text) {
-    text.textContent = message;
-  } else {
-    // 예전 캐시 HTML과 섞여도 오류가 나지 않도록 안전하게 처리
-    status.textContent = message;
-  }
+  if (text) text.textContent = message;
+  else status.textContent = message;
 }
 
 let activeTeachers = ['이서연','손아영','이정훈','정혜정'];
@@ -402,6 +381,7 @@ let timetables = {};
 let reservations = [];
 let currentMonday = getMonday(new Date());
 let currentRoom = ROOMS[0];
+let rawSheetsData = []; // 서버에서 읽어온 시트 데이터 로컬 보관용
 
 let selectedSlot = null;
 let selectedTeacher = null;
@@ -421,11 +401,7 @@ async function apiGet(action, params = {}) {
   });
 
   const data = await response.json();
-
-  if (!response.ok || data.success === false) {
-    throw new Error(data.error || `서버 오류 ${response.status}`);
-  }
-
+  if (!response.ok || data.ok === false) throw new Error(data.error || `서버 오류 ${response.status}`);
   return data;
 }
 
@@ -438,48 +414,26 @@ async function apiPost(action, payload = {}) {
   });
 
   const data = await response.json();
-
-  if (!response.ok || data.success === false) {
-    throw new Error(data.error || `서버 오류 ${response.status}`);
-  }
-
+  if (!response.ok || data.ok === false) throw new Error(data.error || `서버 오류 ${response.status}`);
   return data;
 }
 
 async function fetchInitData(silent = false) {
   try {
     setSyncStatus('loading', '공유 데이터 동기화 중...');
-
     const data = await apiGet('getInitData');
 
-    activeTeachers =
-      Array.isArray(data.activeTeachers)
-        ? data.activeTeachers
-        : activeTeachers;
-
+    rawSheetsData = data.rawSheets || [];
+    activeTeachers = Array.isArray(data.activeTeachers) ? data.activeTeachers : activeTeachers;
     timetables = data.timetables || {};
-    reservations =
-      Array.isArray(data.reservations)
-        ? data.reservations
-        : [];
+    reservations = Array.isArray(data.reservations) ? data.reservations : [];
 
     setSyncStatus('ok', '공유 데이터 동기화 완료');
     renderUI();
   } catch (error) {
     console.error('데이터 동기화 실패:', error);
-
-    setSyncStatus(
-      'error',
-      '연결 실패: ' + String(error.message || error)
-    );
-
-    if (!silent) {
-      alert(
-        'Google Sheet 연결에 실패했습니다.\n' +
-        String(error.message || error)
-      );
-    }
-
+    setSyncStatus('error', '연결 실패: ' + String(error.message || error));
+    if (!silent) alert('Google Sheet 연결에 실패했습니다.\n' + String(error.message || error));
     renderUI();
   }
 }
@@ -500,9 +454,7 @@ function renderRoomTabs() {
     div.innerHTML += `
       <button onclick="selectRoom('${room}')"
         class="flex-1 md:flex-none px-3 py-3 rounded-xl text-xs font-bold border transition text-center md:text-left
-          ${active
-            ? 'bg-teal-600 text-white border-teal-600 shadow-md'
-            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
+          ${active ? 'bg-teal-600 text-white border-teal-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
         <span>🧪 ${room}</span>
         <span class="block text-[10px] font-normal ${active ? 'text-teal-100' : 'text-slate-400'} mt-0.5">
           ${count}건
@@ -525,7 +477,6 @@ function renderUI() {
   activeTeachers.forEach(t => {
     const color = getTeacherColor(t);
     let count = 0;
-
     if (timetables[t]) {
       Object.values(timetables[t]).forEach(day => {
         Object.values(day || {}).forEach(cls => {
@@ -550,13 +501,11 @@ function renderUI() {
 
   const dayNames = ['월','화','수','목','금'];
   const thead = document.getElementById('tableHeader');
-  thead.innerHTML =
-    '<th class="p-2 sm:p-3 text-center w-16 sm:w-20 bg-slate-100 sticky left-0 z-20 border-r border-slate-200">교시</th>';
+  thead.innerHTML = '<th class="p-2 sm:p-3 text-center w-16 sm:w-20 bg-slate-100 sticky left-0 z-20 border-r border-slate-200">교시</th>';
 
   for (let i=0;i<5;i++) {
     const d = addDays(currentMonday, i);
     const isToday = formatDate(d) === formatDate(new Date());
-
     thead.innerHTML += `
       <th class="p-2 sm:p-3 text-center w-1/5 ${isToday ? 'bg-teal-50 text-teal-800' : ''}">
         ${dayNames[i]}
@@ -572,20 +521,11 @@ function renderUI() {
 
   for (let period=1;period<=7;period++) {
     const tr = document.createElement('tr');
-
-    tr.innerHTML = `
-      <td class="p-1.5 sm:p-2 text-center border-r border-slate-200 bg-slate-50 font-bold text-slate-800 text-xs sm:text-sm sticky left-0 z-10">
-        ${period}교시
-      </td>`;
+    tr.innerHTML = `<td class="p-1.5 sm:p-2 text-center border-r border-slate-200 bg-slate-50 font-bold text-slate-800 text-xs sm:text-sm sticky left-0 z-10">${period}교시</td>`;
 
     for (let dayIdx=0;dayIdx<5;dayIdx++) {
       const dateStr = formatDate(addDays(currentMonday, dayIdx));
-
-      const res = reservations.find(r =>
-        r.date === dateStr &&
-        Number(r.period) === period &&
-        (r.room || '과학1실') === currentRoom
-      );
+      const res = reservations.find(r => r.date === dateStr && Number(r.period) === period && (r.room || '과학1실') === currentRoom);
 
       const td = document.createElement('td');
       td.className = 'p-1 sm:p-1.5 border-r border-b border-slate-200 align-top';
@@ -593,7 +533,6 @@ function renderUI() {
       if (res) {
         totalRes++;
         const c = getTeacherColor(res.teacher);
-
         td.innerHTML = `
           <button onclick="openDetailModal('${res.id}')"
             class="slot-button w-full p-1.5 sm:p-2 rounded-xl border ${c.border} ${c.bg} ${c.text} flex flex-col justify-between text-left">
@@ -604,9 +543,7 @@ function renderUI() {
             <div class="font-semibold text-[10px] sm:text-xs text-slate-800 line-clamp-2">
               ${escapeHtml(res.gradeClass || '')}
             </div>
-            ${res.topic
-              ? `<div class="text-[9px] sm:text-[10px] opacity-80 line-clamp-2">🔬 ${escapeHtml(res.topic)}</div>`
-              : ''}
+            ${res.topic ? `<div class="text-[9px] sm:text-[10px] opacity-80 line-clamp-2">🔬 ${escapeHtml(res.topic)}</div>` : ''}
           </button>`;
       } else {
         td.innerHTML = `
@@ -616,13 +553,10 @@ function renderUI() {
             <span class="text-2xl font-light group-hover:scale-110 transition">+</span>
           </button>`;
       }
-
       tr.appendChild(td);
     }
-
     tbody.appendChild(tr);
   }
-
   document.getElementById('statTotal').innerText = `${totalRes}건`;
 }
 
@@ -630,9 +564,7 @@ function openReservationModal(dateStr, dayIdx, period) {
   selectedSlot = { dateStr, dayIdx, period, room: currentRoom };
   selectedTeacher = null;
 
-  document.getElementById('modalTargetDateTime').innerText =
-    `${dateStr} ${period}교시 · ${currentRoom}`;
-
+  document.getElementById('modalTargetDateTime').innerText = `${dateStr} ${period}교시 · ${currentRoom}`;
   document.getElementById('inputTopic').value = '';
   document.getElementById('inputCustomClass').value = '';
 
@@ -648,7 +580,6 @@ function openReservationModal(dateStr, dayIdx, period) {
 
   activeTeachers.forEach(t => {
     const c = getTeacherColor(t);
-
     tBtns.innerHTML += `
       <button onclick="selectTeacher('${escapeHtml(t)}', this)"
         class="teacher-btn p-2.5 rounded-xl border ${c.border} ${c.bg} ${c.text} font-bold text-xs shadow-sm">
@@ -657,9 +588,7 @@ function openReservationModal(dateStr, dayIdx, period) {
       </button>`;
   });
 
-  document.getElementById('selectClass').innerHTML =
-    '<option value="">교사를 먼저 선택하세요</option>';
-
+  document.getElementById('selectClass').innerHTML = '<option value="">교사를 먼저 선택하세요</option>';
   openModal('modalReservation');
 }
 
@@ -669,7 +598,6 @@ function selectTeacher(teacherName, btnEl) {
   document.querySelectorAll('#teacherButtons button').forEach(b => {
     b.classList.remove('ring-4','ring-offset-1');
   });
-
   btnEl.classList.add('ring-4','ring-offset-1');
 
   const sel = document.getElementById('selectClass');
@@ -681,33 +609,20 @@ function selectTeacher(teacherName, btnEl) {
   document.getElementById('inputCustomClass').value = '';
 
   const schedule = timetables[teacherName] || {};
-  const scheduledClass =
-    (schedule[selectedSlot.dayIdx] || {})[selectedSlot.period];
+  const scheduledClass = (schedule[selectedSlot.dayIdx] || {})[selectedSlot.period];
 
   if (scheduledClass) {
-    info.className =
-      'p-3 rounded-xl text-xs border bg-emerald-50 border-emerald-200 text-emerald-800';
-
-    info.innerHTML =
-      `<b>${escapeHtml(teacherName)}</b> 선생님은 이 시간에 수업이 있습니다.<br>
-       <span class="font-bold">시간표: ${escapeHtml(scheduledClass)}</span>`;
-
-    sel.innerHTML +=
-      `<option value="${escapeHtml(scheduledClass)}" selected>⭐ ${escapeHtml(scheduledClass)}</option>`;
+    info.className = 'p-3 rounded-xl text-xs border bg-emerald-50 border-emerald-200 text-emerald-800';
+    info.innerHTML = `<b>${escapeHtml(teacherName)}</b> 선생님은 이 시간에 수업이 있습니다.<br><span class="font-bold">시간표: ${escapeHtml(scheduledClass)}</span>`;
+    sel.innerHTML += `<option value="${escapeHtml(scheduledClass)}" selected>⭐ ${escapeHtml(scheduledClass)}</option>`;
   } else {
-    info.className =
-      'p-3 rounded-xl text-xs border bg-amber-50 border-amber-200 text-amber-800';
-
-    info.innerHTML =
-      `<b>${escapeHtml(teacherName)}</b> 선생님은 이 시간에 등록된 수업이 없습니다.<br>
-       직접 입력으로도 예약할 수 있습니다.`;
-
+    info.className = 'p-3 rounded-xl text-xs border bg-amber-50 border-amber-200 text-amber-800';
+    info.innerHTML = `<b>${escapeHtml(teacherName)}</b> 선생님은 이 시간에 등록된 수업이 없습니다.<br>직접 입력으로도 예약할 수 있습니다.`;
     sel.innerHTML += '<option value="CUSTOM" selected>✏️ 직접 입력</option>';
     customBox.classList.remove('hidden');
   }
 
   const otherClasses = new Set();
-
   Object.values(schedule).forEach(day => {
     Object.values(day || {}).forEach(c => {
       if (c && c !== scheduledClass) otherClasses.add(c);
@@ -717,14 +632,12 @@ function selectTeacher(teacherName, btnEl) {
   if (otherClasses.size > 0) {
     const grp = document.createElement('optgroup');
     grp.label = '이 교사의 다른 등록 수업';
-
     otherClasses.forEach(c => {
       const option = document.createElement('option');
       option.value = c;
       option.textContent = c;
       grp.appendChild(option);
     });
-
     sel.appendChild(grp);
   }
 
@@ -734,40 +647,22 @@ function selectTeacher(teacherName, btnEl) {
     option.textContent = '✏️ 직접 입력';
     sel.appendChild(option);
   }
-
   info.classList.remove('hidden');
 }
 
 document.getElementById('selectClass').addEventListener('change', e => {
   const customBox = document.getElementById('customClassBox');
-
-  if (e.target.value === 'CUSTOM') {
-    customBox.classList.remove('hidden');
-  } else {
-    customBox.classList.add('hidden');
-  }
+  if (e.target.value === 'CUSTOM') customBox.classList.remove('hidden');
+  else customBox.classList.add('hidden');
 });
 
 async function saveReservation() {
-  if (!selectedTeacher) {
-    alert('교사를 선택하세요.');
-    return;
-  }
-
+  if (!selectedTeacher) { alert('교사를 선택하세요.'); return; }
   let cls = document.getElementById('selectClass').value;
-
-  if (!cls) {
-    alert('수업을 선택하세요.');
-    return;
-  }
-
+  if (!cls) { alert('수업을 선택하세요.'); return; }
   if (cls === 'CUSTOM') {
     cls = document.getElementById('inputCustomClass').value.trim();
-
-    if (!cls) {
-      alert('수업/행사명을 직접 입력하세요.');
-      return;
-    }
+    if (!cls) { alert('수업/행사명을 직접 입력하세요.'); return; }
   }
 
   const topic = document.getElementById('inputTopic').value.trim();
@@ -777,7 +672,6 @@ async function saveReservation() {
   button.innerText = '저장 중...';
 
   const newRes = {
-    id: 'R_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     date: selectedSlot.dateStr,
     period: selectedSlot.period,
     room: selectedSlot.room,
@@ -787,10 +681,7 @@ async function saveReservation() {
   };
 
   try {
-    await apiPost('saveReservation', {
-      reservation: newRes
-    });
-
+    await apiPost('saveReservation', newRes);
     closeModal('modalReservation');
     await fetchInitData(true);
     alert('예약이 저장되었습니다.');
@@ -805,24 +696,14 @@ async function saveReservation() {
 
 function openDetailModal(id) {
   activeDetailId = id;
-
   const res = reservations.find(r => r.id === id);
   if (!res) return;
 
-  document.getElementById('detailDateTime').innerText =
-    `${res.date} ${res.period}교시`;
-
-  document.getElementById('detailRoom').innerText =
-    res.room || '과학1실';
-
-  document.getElementById('detailTeacher').innerText =
-    res.teacher || '-';
-
-  document.getElementById('detailClass').innerText =
-    res.gradeClass || '-';
-
-  document.getElementById('detailTopic').innerText =
-    res.topic || '-';
+  document.getElementById('detailDateTime').innerText = `${res.date} ${res.period}교시`;
+  document.getElementById('detailRoom').innerText = res.room || '과학1실';
+  document.getElementById('detailTeacher').innerText = res.teacher || '-';
+  document.getElementById('detailClass').innerText = res.gradeClass || '-';
+  document.getElementById('detailTopic').innerText = res.topic || '-';
 
   openModal('modalDetail');
 }
@@ -836,10 +717,7 @@ async function deleteReservation() {
   button.innerText = '삭제 중...';
 
   try {
-    await apiPost('deleteReservation', {
-      id: activeDetailId
-    });
-
+    await apiPost('deleteReservation', { id: activeDetailId, password: adminSessionPassword });
     closeModal('modalDetail');
     await fetchInitData(true);
   } catch (error) {
@@ -854,36 +732,25 @@ async function deleteReservation() {
 /* 관리자 */
 function openAdminAuthModal() {
   document.getElementById('adminPwInput').value = '';
+  document.getElementById('btnSaveAdmin').classList.add('hidden');
   openModal('modalAdminAuth');
-
-  setTimeout(() => {
-    document.getElementById('adminPwInput').focus();
-  }, 50);
+  setTimeout(() => { document.getElementById('adminPwInput').focus(); }, 50);
 }
 
 async function verifyAdmin() {
   const password = document.getElementById('adminPwInput').value;
-
-  if (!password) {
-    alert('비밀번호를 입력하세요.');
-    return;
-  }
+  if (!password) { alert('비밀번호를 입력하세요.'); return; }
 
   try {
     const data = await apiPost('verifyAdmin', { password });
-
-    if (!data.valid) {
-      alert('비밀번호가 틀렸습니다.');
-      return;
-    }
+    if (!data.valid) { alert('비밀번호가 틀렸습니다.'); return; }
 
     adminSessionPassword = password;
-
     closeModal('modalAdminAuth');
-    document.getElementById('inputTeachers').value =
-      activeTeachers.join(', ');
-
+    
+    document.getElementById('inputTeachers').value = activeTeachers.join(', ');
     document.getElementById('syncResultBox').classList.add('hidden');
+    
     openModal('modalAdminSettings');
   } catch (error) {
     alert('관리자 인증 실패: ' + error.message);
@@ -891,24 +758,15 @@ async function verifyAdmin() {
 }
 
 async function changeAdminPassword() {
-  if (!adminSessionPassword) {
-    alert('관리자 인증이 필요합니다.');
-    return;
-  }
-
+  if (!adminSessionPassword) { alert('관리자 인증이 필요합니다.'); return; }
   const newPassword = prompt('새 관리자 암호를 입력하세요.');
-
-  if (!newPassword || newPassword.trim().length < 4) {
-    alert('4자 이상 입력하세요.');
-    return;
-  }
+  if (!newPassword || newPassword.trim().length < 4) { alert('4자 이상 입력하세요.'); return; }
 
   try {
     await apiPost('changeAdminPassword', {
       password: adminSessionPassword,
       newPassword: newPassword.trim()
     });
-
     adminSessionPassword = newPassword.trim();
     alert('관리자 암호가 변경되었습니다.');
   } catch (error) {
@@ -916,371 +774,201 @@ async function changeAdminPassword() {
   }
 }
 
-/* 시간표 동기화 */
+/* 시간표 동기화 - 프론트엔드 파싱 */
 async function syncTimetablesFromSheet() {
-  if (!adminSessionPassword) {
-    alert('관리자 인증이 필요합니다.');
-    return;
-  }
+  if (!adminSessionPassword) { alert('관리자 인증이 필요합니다.'); return; }
+  
+  const newTeachers = document.getElementById('inputTeachers').value.split(',').map(s => s.trim()).filter(Boolean);
+  if (newTeachers.length === 0) { alert('교사 이름을 1명 이상 입력하세요.'); return; }
 
-  const newTeachers =
-    document.getElementById('inputTeachers')
-      .value
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
-  if (newTeachers.length === 0) {
-    alert('교사 이름을 1명 이상 입력하세요.');
-    return;
-  }
-
-  const button =
-    document.getElementById('btnSync');
-
+  const button = document.getElementById('btnSync');
   button.disabled = true;
-  button.innerText =
-    '⏳ Google Sheet 시간표 읽는 중...';
+  button.innerText = '⏳ 로컬 데이터 분석 중...';
 
   try {
-    const data =
-      await apiPost(
-        'syncTimetables',
-        {
-          password:
-            adminSessionPassword,
-          activeTeachers:
-            newTeachers
-        }
-      );
+    const parsedData = parseRawSheetsForTeachers(rawSheetsData, newTeachers);
+    
+    let newTimetables = {};
+    let resultHtml = '<div class="font-bold text-teal-800 mb-2">분석 결과</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
 
-    activeTeachers =
-      newTeachers;
-
-    timetables =
-      data.timetables || {};
-
-    let resultHtml =
-      '<div class="font-bold text-teal-800 mb-2">분석 결과</div>' +
-      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
-
-    (data.results || [])
-      .forEach(item => {
-        if (item.success) {
-          resultHtml += `
-            <div class="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-800">
-              ✅ ${escapeHtml(item.teacher)}
-              <span class="float-right font-bold">
-                ${Number(item.count || 0)}시간
-              </span>
-              <div class="clear-both text-[9px] mt-1">
-                탭: ${escapeHtml(item.sheetName)}
-              </div>
-              <div class="text-[9px] mt-1">
-                ${escapeHtml(item.matchedBy || '')}
-              </div>
-            </div>`;
-        } else {
-          resultHtml += `
-            <div class="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
-              ⚠️ ${escapeHtml(item.teacher)}
-              <span class="float-right">
-                0시간
-              </span>
-              <div class="clear-both text-[9px] mt-1">
-                ${item.sheetName
-                  ? '연결된 탭: ' + escapeHtml(item.sheetName)
-                  : '연결된 탭 없음'}
-              </div>
-              <div class="text-[9px] mt-1">
-                ${escapeHtml(item.reason || '')}
-              </div>
-            </div>`;
-        }
-      });
+    newTeachers.forEach(teacher => {
+      const item = parsedData.results[teacher];
+      if (item && item.count > 0) {
+        newTimetables[teacher] = item.schedule;
+        resultHtml += `
+          <div class="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-800">
+            ✅ ${escapeHtml(teacher)}
+            <span class="float-right font-bold">${item.count}시간</span>
+            <div class="clear-both text-[9px] mt-1">탭: ${escapeHtml(item.sheetName)}</div>
+            <div class="text-[9px] mt-1">${escapeHtml(item.matchedBy || '')}</div>
+          </div>`;
+      } else {
+        resultHtml += `
+          <div class="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
+            ⚠️ ${escapeHtml(teacher)}
+            <span class="float-right">0시간</span>
+            <div class="clear-both text-[9px] mt-1">${item?.sheetName ? '연결된 탭: ' + escapeHtml(item.sheetName) : '연결된 탭 없음'}</div>
+            <div class="text-[9px] mt-1">${escapeHtml(item?.reason || '분석 실패')}</div>
+          </div>`;
+      }
+    });
 
     resultHtml += '</div>';
 
-    const resultBox =
-      document.getElementById(
-        'syncResultBox'
-      );
+    const resultBox = document.getElementById('syncResultBox');
+    resultBox.innerHTML = resultHtml;
+    resultBox.classList.remove('hidden');
 
-    resultBox.innerHTML =
-      resultHtml;
+    const diagnostics = document.getElementById('sheetDiagnostics');
+    diagnostics.innerHTML = `<div class="font-bold mb-1">실제 Google Sheet 탭:</div><div class="break-words">${(parsedData.sheetNames || []).map(escapeHtml).join(' / ')}</div>`;
 
-    resultBox.classList
-      .remove('hidden');
+    // 미리보기 상태 저장
+    window.previewTeachers = newTeachers;
+    window.previewTimetables = newTimetables;
 
-    const diagnostics =
-      document.getElementById(
-        'sheetDiagnostics'
-      );
-
-    diagnostics.innerHTML =
-      `<div class="font-bold mb-1">
-         실제 Google Sheet 탭:
-       </div>
-       <div class="break-words">
-         ${(data.sheetNames || [])
-           .map(escapeHtml)
-           .join(' / ')}
-       </div>`;
-
-    await fetchInitData(true);
+    // 설정 저장 버튼 활성화
+    document.getElementById('btnSaveAdmin').classList.remove('hidden');
 
   } catch (error) {
     console.error(error);
-
-    alert(
-      '시간표 동기화 실패: ' +
-      String(
-        error.message || error
-      )
-    );
+    alert('시간표 분석 실패: ' + String(error.message || error));
   } finally {
     button.disabled = false;
-    button.innerText =
-      '🔍 시트 탭에서 시간표 자동 추출 및 저장';
+    button.innerText = '🔍 시트 탭에서 시간표 자동 추출';
   }
 }
 
+// 저장 버튼 기능 추가
+async function saveAdminSettings() {
+  if (!adminSessionPassword) return;
+
+  const btn = document.getElementById('btnSaveAdmin');
+  btn.disabled = true;
+  btn.innerText = '저장 중...';
+
+  try {
+    await apiPost('saveSettings', {
+      password: adminSessionPassword,
+      activeTeachers: window.previewTeachers || activeTeachers,
+      timetables: window.previewTimetables || timetables
+    });
+
+    activeTeachers = window.previewTeachers || activeTeachers;
+    timetables = window.previewTimetables || timetables;
+
+    alert('설정이 저장되었습니다.');
+    closeModal('modalAdminSettings');
+    renderUI();
+  } catch (error) {
+    alert('설정 저장 실패: ' + error.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '💾 설정 저장';
+    btn.classList.add('hidden'); // 저장 후 다시 숨김
+  }
+}
+
+
+/* 프론트엔드 파서 함수 (기존 코드 유지) */
 function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
   const dayNames = ['월','화','수','목','금'];
-
-  function cleanText(value) {
-    return String(value ?? '')
-      .replace(/\u200B/g, '')
-      .replace(/\uFEFF/g, '')
-      .replace(/\r/g, '')
-      .trim();
-  }
-
-  function compact(value) {
-    return cleanText(value)
-      .replace(/\s+/g, '')
-      .replace(/[·._()[\]{}\-]/g, '');
-  }
-
-  function teacherKey(value) {
-    return compact(value)
-      .replace(/선생님/g, '')
-      .replace(/교사/g, '')
-      .replace(/시간표/g, '')
-      .replace(/담당/g, '');
-  }
-
-  function teacherBaseKey(value) {
-    return teacherKey(value)
-      .replace(/\d+$/g, '');
-  }
+  function cleanText(value) { return String(value ?? '').replace(/\u200B/g, '').replace(/\uFEFF/g, '').replace(/\r/g, '').trim(); }
+  function compact(value) { return cleanText(value).replace(/\s+/g, '').replace(/[·._()[\]{}\-]/g, ''); }
+  function teacherKey(value) { return compact(value).replace(/선생님/g, '').replace(/교사/g, '').replace(/시간표/g, '').replace(/담당/g, ''); }
+  function teacherBaseKey(value) { return teacherKey(value).replace(/\d+$/g, ''); }
 
   function topCellsContainTeacher(sheet, teacher) {
     const target = teacherBaseKey(teacher);
     if (!target) return false;
-
     const rows = Array.isArray(sheet.values) ? sheet.values : [];
-
     for (let r = 0; r < Math.min(rows.length, 10); r++) {
       const row = rows[r] || [];
-
       for (let c = 0; c < Math.min(row.length, 10); c++) {
         const cellKey = teacherBaseKey(row[c]);
-
-        if (
-          cellKey &&
-          (
-            cellKey === target ||
-            cellKey.includes(target) ||
-            target.includes(cellKey)
-          )
-        ) {
-          return true;
-        }
+        if (cellKey && (cellKey === target || cellKey.includes(target) || target.includes(cellKey))) return true;
       }
     }
-
     return false;
   }
 
   function findTeacherSheet(teacher) {
     const exactKey = teacherKey(teacher);
     const baseKey = teacherBaseKey(teacher);
-
-    let sheet = rawSheets.find(s =>
-      teacherKey(s.name) === exactKey
-    );
-
-    if (sheet) {
-      return {
-        sheet,
-        matchedBy: '탭 이름 정확 일치'
-      };
-    }
-
-    sheet = rawSheets.find(s =>
-      teacherBaseKey(s.name) === baseKey
-    );
-
-    if (sheet) {
-      return {
-        sheet,
-        matchedBy: '탭 이름 숫자/표기 보정 일치'
-      };
-    }
-
+    let sheet = rawSheets.find(s => teacherKey(s.name) === exactKey);
+    if (sheet) return { sheet, matchedBy: '탭 이름 정확 일치' };
+    sheet = rawSheets.find(s => teacherBaseKey(s.name) === baseKey);
+    if (sheet) return { sheet, matchedBy: '탭 이름 숫자/표기 보정 일치' };
     sheet = rawSheets.find(s => {
       const key = teacherKey(s.name);
       const base = teacherBaseKey(s.name);
-
-      return (
-        (key && exactKey &&
-          (key.includes(exactKey) || exactKey.includes(key))) ||
-        (base && baseKey &&
-          (base.includes(baseKey) || baseKey.includes(base)))
-      );
+      return ((key && exactKey && (key.includes(exactKey) || exactKey.includes(key))) || (base && baseKey && (base.includes(baseKey) || baseKey.includes(base))));
     });
-
-    if (sheet) {
-      return {
-        sheet,
-        matchedBy: '탭 이름 부분 일치'
-      };
-    }
-
-    sheet = rawSheets.find(s =>
-      topCellsContainTeacher(s, teacher)
-    );
-
-    if (sheet) {
-      return {
-        sheet,
-        matchedBy: '시트 상단 셀의 교사명으로 일치'
-      };
-    }
-
-    return {
-      sheet: null,
-      matchedBy: ''
-    };
+    if (sheet) return { sheet, matchedBy: '탭 이름 부분 일치' };
+    sheet = rawSheets.find(s => topCellsContainTeacher(s, teacher));
+    if (sheet) return { sheet, matchedBy: '시트 상단 셀의 교사명으로 일치' };
+    return { sheet: null, matchedBy: '' };
   }
 
   function dayIndexFromCell(value) {
-    const text = compact(value)
-      .replace(/요일/g, '')
-      .replace(/曜/g, '');
-
+    const text = compact(value).replace(/요일/g, '').replace(/曜/g, '');
     const first = text.charAt(0);
     const idx = dayNames.indexOf(first);
-
     return idx >= 0 ? idx : -1;
   }
 
   function periodFromCell(value) {
     const text = cleanText(value);
-
     let m = text.match(/^\s*([1-7])\s*(?:교시)?\s*$/);
     if (m) return Number(m[1]);
-
     m = text.match(/(?:^|\s)([1-7])\s*교시(?:\s|$)/);
     if (m) return Number(m[1]);
-
     return null;
   }
 
   function parseLessonCell(raw) {
     const text = cleanText(raw);
     if (!text) return '';
-
-    const lines = text
-      .split(/\n+/)
-      .map(s => s.trim())
-      .filter(Boolean);
-
+    const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
     let className = '';
     const subjectParts = [];
-
     lines.forEach(line => {
       let m = line.match(/([1-3])\s*[-]\s*(\d{1,2})/);
-
-      if (!m) {
-        m = line.match(/([1-3])\s*학년\s*(\d{1,2})\s*반/);
-      }
-
+      if (!m) m = line.match(/([1-3])\s*학년\s*(\d{1,2})\s*반/);
       if (m && !className) {
         className = `${m[1]}-${m[2]}`;
-
-        const remainder = line
-          .replace(m[0], '')
-          .trim();
-
+        const remainder = line.replace(m[0], '').trim();
         if (remainder) subjectParts.push(remainder);
       } else {
         subjectParts.push(line);
       }
     });
-
     const subject = subjectParts.join(' ').trim();
-
-    return className
-      ? `${className} ${subject}`.trim()
-      : (subject || text);
+    return className ? `${className} ${subject}`.trim() : (subject || text);
   }
 
-  const sheetNames =
-    rawSheets.map(s => String(s.name || ''));
-
+  const sheetNames = rawSheets.map(s => String(s.name || ''));
   const results = {};
 
   targetTeachers.forEach(teacher => {
     const found = findTeacherSheet(teacher);
     const sheet = found.sheet;
-
     if (!sheet) {
-      results[teacher] = {
-        count: 0,
-        schedule: {0:{},1:{},2:{},3:{},4:{}},
-        sheetName: '',
-        matchedBy: '',
-        reason:
-          '교사명과 연결되는 탭을 찾지 못함. 아래 실제 탭 목록을 확인하세요.'
-      };
+      results[teacher] = { count: 0, schedule: {0:{},1:{},2:{},3:{},4:{}}, sheetName: '', matchedBy: '', reason: '교사명과 연결되는 탭을 찾지 못함. 아래 실제 탭 목록을 확인하세요.' };
       return;
     }
 
-    const rows =
-      Array.isArray(sheet.values)
-        ? sheet.values
-        : [];
-
-    const schedule =
-      {0:{},1:{},2:{},3:{},4:{}};
-
+    const rows = Array.isArray(sheet.values) ? sheet.values : [];
+    const schedule = {0:{},1:{},2:{},3:{},4:{}};
     let headerRow = -1;
     let dayCols = {};
 
-    for (
-      let r = 0;
-      r < Math.min(rows.length, 25);
-      r++
-    ) {
+    for (let r = 0; r < Math.min(rows.length, 25); r++) {
       const foundDays = {};
-
       (rows[r] || []).forEach((cell, col) => {
-        const dIdx =
-          dayIndexFromCell(cell);
-
-        if (
-          dIdx >= 0 &&
-          foundDays[dIdx] === undefined
-        ) {
-          foundDays[dIdx] = col;
-        }
+        const dIdx = dayIndexFromCell(cell);
+        if (dIdx >= 0 && foundDays[dIdx] === undefined) foundDays[dIdx] = col;
       });
-
-      if (
-        Object.keys(foundDays).length >= 3
-      ) {
+      if (Object.keys(foundDays).length >= 3) {
         headerRow = r;
         dayCols = foundDays;
         break;
@@ -1288,103 +976,41 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     }
 
     if (headerRow < 0) {
-      results[teacher] = {
-        count: 0,
-        schedule,
-        sheetName: sheet.name,
-        matchedBy: found.matchedBy,
-        reason:
-          `탭 "${sheet.name}"은 찾았지만 월~금 요일 머리글을 찾지 못함`
-      };
+      results[teacher] = { count: 0, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: `탭 "${sheet.name}"은 찾았지만 월~금 요일 머리글을 찾지 못함` };
       return;
     }
 
-    const firstDayCol =
-      Math.min(...Object.values(dayCols));
-
+    const firstDayCol = Math.min(...Object.values(dayCols));
     let count = 0;
     let periodRows = 0;
 
-    for (
-      let r = headerRow + 1;
-      r < rows.length;
-      r++
-    ) {
+    for (let r = headerRow + 1; r < rows.length; r++) {
       const row = rows[r] || [];
       let period = null;
 
-      for (
-        let c = 0;
-        c < Math.max(firstDayCol, 1);
-        c++
-      ) {
-        const p =
-          periodFromCell(row[c]);
-
-        if (p !== null) {
-          period = p;
-          break;
-        }
+      for (let c = 0; c < Math.max(firstDayCol, 1); c++) {
+        const p = periodFromCell(row[c]);
+        if (p !== null) { period = p; break; }
       }
-
       if (period === null) {
-        for (
-          let c = 0;
-          c < Math.min(row.length, 8);
-          c++
-        ) {
-          const p =
-            periodFromCell(row[c]);
-
-          if (p !== null) {
-            period = p;
-            break;
-          }
+        for (let c = 0; c < Math.min(row.length, 8); c++) {
+          const p = periodFromCell(row[c]);
+          if (p !== null) { period = p; break; }
         }
       }
-
       if (period === null) continue;
-
       periodRows++;
 
-      Object.entries(dayCols).forEach(
-        ([dayIdxStr, col]) => {
-          const dayIdx =
-            Number(dayIdxStr);
-
-          const display =
-            parseLessonCell(row[col]);
-
-          if (display) {
-            schedule[dayIdx][period] =
-              display;
-
-            count++;
-          }
-        }
-      );
+      Object.entries(dayCols).forEach(([dayIdxStr, col]) => {
+        const dayIdx = Number(dayIdxStr);
+        const display = parseLessonCell(row[col]);
+        if (display) { schedule[dayIdx][period] = display; count++; }
+      });
     }
-
-    results[teacher] = {
-      count,
-      schedule,
-      sheetName: sheet.name,
-      matchedBy: found.matchedBy,
-      reason:
-        count > 0
-          ? '정상 추출'
-          : (
-              periodRows === 0
-                ? `탭 "${sheet.name}"에서 요일은 찾았지만 1~7교시 행을 찾지 못함`
-                : `탭 "${sheet.name}"에서 요일/교시는 찾았지만 수업 셀을 읽지 못함`
-            )
-    };
+    results[teacher] = { count, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: count > 0 ? '정상 추출' : (periodRows === 0 ? `탭 "${sheet.name}"에서 요일은 찾았지만 1~7교시 행을 찾지 못함` : `탭 "${sheet.name}"에서 요일/교시는 찾았지만 수업 셀을 읽지 못함`) };
   });
 
-  return {
-    results,
-    sheetNames
-  };
+  return { results, sheetNames };
 }
 
 function navigateWeek(days) {
@@ -1411,7 +1037,6 @@ function closeModal(id) {
 
 document.getElementById('datePicker').addEventListener('change', e => {
   if (!e.target.value) return;
-
   const picked = new Date(e.target.value + 'T12:00:00');
   currentMonday = getMonday(picked);
   renderUI();
@@ -1422,13 +1047,7 @@ document.getElementById('adminPwInput').addEventListener('keydown', e => {
 });
 
 fetchInitData(true);
-
-setInterval(() => {
-  if (document.visibilityState === 'visible') {
-    fetchInitData(true);
-  }
-}, 30000);
+setInterval(() => { if (document.visibilityState === 'visible') fetchInitData(true); }, 30000);
 </script>
-
 </body>
 </html>
