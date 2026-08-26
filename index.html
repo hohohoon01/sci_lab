@@ -251,10 +251,7 @@
 <div id="modalAdminSettings" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-end sm:items-center justify-center z-50 p-0 sm:p-3">
   <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden modal-scroll flex flex-col">
     <div class="bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-10">
-      <div>
-        <h3 class="font-bold text-sm">⚙️ 과학교사 및 시간표 동기화 설정</h3>
-        <p class="text-[10px] text-slate-400 mt-1">교사 이름과 같은 Google Sheet 탭에서 시간표를 자동 추출합니다.</p>
-      </div>
+      <h3 class="font-bold text-sm">⚙️ 과학교사 및 시간표 동기화 설정</h3>
       <button onclick="closeModal('modalAdminSettings')" class="text-2xl font-bold px-2">&times;</button>
     </div>
 
@@ -286,17 +283,9 @@
         </div>
       </div>
 
-      <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-        <h4 class="text-xs font-bold text-blue-900 mb-1">진단 정보</h4>
-        <p class="text-[10px] text-blue-700 mb-2">
-          시간표를 못 찾으면 실제로 발견된 Google Sheet 탭 이름과 실패 이유가 표시됩니다.
-        </p>
-        <div id="sheetDiagnostics" class="text-[10px] text-slate-600">아직 분석하지 않았습니다.</div>
-      </div>
-
     </div>
 
-    <!-- 하단 영역 (암호 변경 버튼 제거됨) -->
+    <!-- 하단 버튼 영역 -->
     <div class="bg-slate-100 p-4 border-t flex flex-wrap justify-end gap-2 safe-bottom">
       <button onclick="closeModal('modalAdminSettings')" class="px-5 py-2.5 bg-slate-300 text-slate-800 rounded-xl text-xs font-bold">
         닫기
@@ -412,7 +401,6 @@ async function apiPost(action, payload = {}) {
   return data;
 }
 
-// 초기 로딩용 (무거운 데이터는 제외됨)
 async function fetchInitData(silent = false) {
   try {
     setSyncStatus('loading', '공유 데이터 동기화 중...');
@@ -729,7 +717,6 @@ async function deleteReservation() {
   }
 }
 
-/* 관리자 */
 function openAdminAuthModal() {
   document.getElementById('adminPwInput').value = '';
   document.getElementById('btnSaveAdmin').classList.add('hidden');
@@ -757,7 +744,6 @@ async function verifyAdmin() {
   }
 }
 
-/* 시간표 동기화 - 관리자가 요청 시에만 시트 데이터를 불러와 정밀 분석 */
 async function syncTimetablesFromSheet() {
   if (!adminSessionPassword) { alert('관리자 인증이 필요합니다.'); return; }
   
@@ -766,15 +752,13 @@ async function syncTimetablesFromSheet() {
 
   const button = document.getElementById('btnSync');
   button.disabled = true;
-  button.innerText = '⏳ 구글 시트 데이터 불러오는 중...'; 
+  button.innerText = '⏳ 구글 시트 데이터 스캔 중...'; 
 
   try {
     const rawDataResponse = await apiPost('getRawSheets', { password: adminSessionPassword });
     const fetchedRawSheets = rawDataResponse.rawSheets || [];
 
-    button.innerText = '⏳ 데이터 정밀 분석 중...';
-    
-    // UI 반영 시간을 잠시 확보
+    button.innerText = '⏳ 시간표 정밀 분석 중...';
     await new Promise(resolve => setTimeout(resolve, 50));
 
     const parsedData = parseRawSheetsForTeachers(fetchedRawSheets, newTeachers);
@@ -810,9 +794,6 @@ async function syncTimetablesFromSheet() {
     resultBox.innerHTML = resultHtml;
     resultBox.classList.remove('hidden');
 
-    const diagnostics = document.getElementById('sheetDiagnostics');
-    diagnostics.innerHTML = `<div class="font-bold mb-1">실제 Google Sheet 탭:</div><div class="break-words">${(parsedData.sheetNames || []).map(escapeHtml).join(' / ')}</div>`;
-
     window.previewTeachers = newTeachers;
     window.previewTimetables = newTimetables;
 
@@ -827,7 +808,6 @@ async function syncTimetablesFromSheet() {
   }
 }
 
-// 설정 저장 버튼
 async function saveAdminSettings() {
   if (!adminSessionPassword) return;
 
@@ -857,65 +837,57 @@ async function saveAdminSettings() {
   }
 }
 
-/* 개선된 프론트엔드 파서 함수 (다양한 요일/교시 입력 형태 대응) */
 function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
   function cleanText(value) { return String(value ?? '').replace(/\u200B/g, '').replace(/\uFEFF/g, '').replace(/\r/g, '').trim(); }
-  function compact(value) { return cleanText(value).replace(/\s+/g, '').replace(/[·._()[\]{}\-]/g, ''); }
-  function teacherKey(value) { return compact(value).replace(/선생님/g, '').replace(/교사/g, '').replace(/시간표/g, '').replace(/담당/g, ''); }
-  function teacherBaseKey(value) { return teacherKey(value).replace(/\d+$/g, ''); }
-
-  function topCellsContainTeacher(sheet, teacher) {
-    const target = teacherBaseKey(teacher);
-    if (!target) return false;
-    const rows = Array.isArray(sheet.values) ? sheet.values : [];
-    for (let r = 0; r < Math.min(rows.length, 10); r++) {
-      const row = rows[r] || [];
-      for (let c = 0; c < Math.min(row.length, 10); c++) {
-        const cellKey = teacherBaseKey(row[c]);
-        if (cellKey && (cellKey === target || cellKey.includes(target) || target.includes(cellKey))) return true;
-      }
-    }
-    return false;
-  }
 
   function findTeacherSheet(teacher) {
-    const exactKey = teacherKey(teacher);
-    const baseKey = teacherBaseKey(teacher);
-    let sheet = rawSheets.find(s => teacherKey(s.name) === exactKey);
-    if (sheet) return { sheet, matchedBy: '탭 이름 정확 일치' };
-    sheet = rawSheets.find(s => teacherBaseKey(s.name) === baseKey);
-    if (sheet) return { sheet, matchedBy: '탭 이름 숫자/표기 보정 일치' };
-    sheet = rawSheets.find(s => {
-      const key = teacherKey(s.name);
-      const base = teacherBaseKey(s.name);
-      return ((key && exactKey && (key.includes(exactKey) || exactKey.includes(key))) || (base && baseKey && (base.includes(baseKey) || baseKey.includes(base))));
-    });
-    if (sheet) return { sheet, matchedBy: '탭 이름 부분 일치' };
-    sheet = rawSheets.find(s => topCellsContainTeacher(s, teacher));
-    if (sheet) return { sheet, matchedBy: '시트 상단 셀의 교사명으로 일치' };
+    const cleanTeacher = teacher.replace(/\s+/g, '');
+    let sheet = rawSheets.find(s => s.name.replace(/\s+/g, '').includes(cleanTeacher));
+    if (sheet) return { sheet, matchedBy: '탭 이름 매칭' };
+
+    for (let s of rawSheets) {
+      const rows = Array.isArray(s.values) ? s.values : [];
+      for (let r = 0; r < Math.min(rows.length, 10); r++) {
+        for (let c = 0; c < Math.min((rows[r]||[]).length, 10); c++) {
+          const cellVal = String(rows[r][c] || '').replace(/\s+/g, '');
+          if (cellVal.includes(cleanTeacher)) {
+            return { sheet: s, matchedBy: '시트 내부 셀 매칭' };
+          }
+        }
+      }
+    }
     return { sheet: null, matchedBy: '' };
   }
 
-  // 📌 요일 파싱 로직 한층 강화 ("(월)", "월요일" 등 완벽 인식)
   function dayIndexFromCell(value) {
     const text = String(value ?? '').replace(/\s/g, '');
-    if (/^월(요일)?$/.test(text) || text.includes('(월)')) return 0;
-    if (/^화(요일)?$/.test(text) || text.includes('(화)')) return 1;
-    if (/^수(요일)?$/.test(text) || text.includes('(수)')) return 2;
-    if (/^목(요일)?$/.test(text) || text.includes('(목)')) return 3;
-    if (/^금(요일)?$/.test(text) || text.includes('(금)')) return 4;
+    if (!text) return -1;
+    if (text === '월' || text === '월요일' || text === '(월)' || text === '[월]') return 0;
+    if (text === '화' || text === '화요일' || text === '(화)' || text === '[화]') return 1;
+    if (text === '수' || text === '수요일' || text === '(수)' || text === '[수]') return 2;
+    if (text === '목' || text === '목요일' || text === '(목)' || text === '[목]') return 3;
+    if (text === '금' || text === '금요일' || text === '(금)' || text === '[금]') return 4;
+    
+    if (text.startsWith('월')) return 0;
+    if (text.startsWith('화')) return 1;
+    if (text.startsWith('수')) return 2;
+    if (text.startsWith('목')) return 3;
+    if (text.startsWith('금')) return 4;
     return -1;
   }
 
-  // 📌 교시 파싱 로직 강화 ("1", "1교시", "[1]", "(1)" 완벽 인식)
   function periodFromCell(value) {
-    const text = String(value ?? '').trim();
-    let m = text.match(/^([1-9]|10)\s*교시$/);
-    if (m) return Number(m[1]);
-    m = text.match(/^([1-9]|10)$/);
-    if (m) return Number(m[1]);
-    m = text.match(/^[\[\(]([1-9]|10)[\]\)]$/);
-    if (m) return Number(m[1]);
+    const text = String(value ?? '').replace(/\s/g, '');
+    if (!text) return null;
+    
+    if (text.includes('1교시') || text === '1' || text === '(1)' || text === '[1]' || text === '①' || text === '1.') return 1;
+    if (text.includes('2교시') || text === '2' || text === '(2)' || text === '[2]' || text === '②' || text === '2.') return 2;
+    if (text.includes('3교시') || text === '3' || text === '(3)' || text === '[3]' || text === '③' || text === '3.') return 3;
+    if (text.includes('4교시') || text === '4' || text === '(4)' || text === '[4]' || text === '④' || text === '4.') return 4;
+    if (text.includes('5교시') || text === '5' || text === '(5)' || text === '[5]' || text === '⑤' || text === '5.') return 5;
+    if (text.includes('6교시') || text === '6' || text === '(6)' || text === '[6]' || text === '⑥' || text === '6.') return 6;
+    if (text.includes('7교시') || text === '7' || text === '(7)' || text === '[7]' || text === '⑦' || text === '7.') return 7;
+    if (text.includes('8교시') || text === '8' || text === '(8)' || text === '[8]' || text === '⑧' || text === '8.') return 8;
     return null;
   }
 
@@ -947,7 +919,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     const found = findTeacherSheet(teacher);
     const sheet = found.sheet;
     if (!sheet) {
-      results[teacher] = { count: 0, schedule: {0:{},1:{},2:{},3:{},4:{}}, sheetName: '', matchedBy: '', reason: '교사명과 일치하는 탭을 찾지 못함. 아래 실제 탭 목록 확인.' };
+      results[teacher] = { count: 0, schedule: {0:{},1:{},2:{},3:{},4:{}}, sheetName: '', matchedBy: '', reason: '교사명과 일치하는 탭을 찾지 못함. (동일한 시트 파일에 탭이 있는지 확인해 주세요.)' };
       return;
     }
 
@@ -1001,7 +973,14 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
         if (display) { schedule[dayIdx][period] = display; count++; }
       });
     }
-    results[teacher] = { count, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: count > 0 ? '정상 추출' : (periodRows === 0 ? `"${sheet.name}" 탭에서 1~7교시 행을 찾지 못함` : `"${sheet.name}" 탭에서 요일/교시는 찾았지만 내용이 비어있음`) };
+    
+    results[teacher] = { 
+      count, 
+      schedule, 
+      sheetName: sheet.name, 
+      matchedBy: found.matchedBy, 
+      reason: count > 0 ? '정상 추출' : (periodRows === 0 ? `"${sheet.name}" 탭에서 1~7교시(또는 ①) 행을 찾지 못함` : `"${sheet.name}" 탭에서 요일/교시는 찾았지만 내용이 비어있음`) 
+    };
   });
 
   return { results, sheetNames };
