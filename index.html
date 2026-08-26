@@ -261,9 +261,6 @@
         <label class="block text-xs font-bold text-slate-800 mb-1">
           1. 현재 과학 교사 명단
         </label>
-        <p class="text-[10px] text-slate-500 mb-2">
-          콤마로 구분하세요. 실제 Google Sheet 탭 이름과 같게 입력하는 것이 가장 안전합니다.
-        </p>
         <input type="text" id="inputTeachers"
           class="w-full border border-slate-300 p-3 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500"
           placeholder="예: 이서연, 손아영, 이정훈, 정혜정">
@@ -285,7 +282,6 @@
 
     </div>
 
-    <!-- 하단 버튼 영역 -->
     <div class="bg-slate-100 p-4 border-t flex flex-wrap justify-end gap-2 safe-bottom">
       <button onclick="closeModal('modalAdminSettings')" class="px-5 py-2.5 bg-slate-300 text-slate-800 rounded-xl text-xs font-bold">
         닫기
@@ -774,16 +770,14 @@ async function syncTimetablesFromSheet() {
           <div class="p-2 bg-emerald-50 border border-emerald-200 rounded text-emerald-800">
             ✅ ${escapeHtml(teacher)}
             <span class="float-right font-bold">${item.count}시간</span>
-            <div class="clear-both text-[9px] mt-1">탭: ${escapeHtml(item.sheetName)}</div>
-            <div class="text-[9px] mt-1">${escapeHtml(item.matchedBy || '')}</div>
+            <div class="clear-both text-[9px] mt-1">추출 완료</div>
           </div>`;
       } else {
         resultHtml += `
           <div class="p-2 bg-amber-50 border border-amber-200 rounded text-amber-800">
             ⚠️ ${escapeHtml(teacher)}
             <span class="float-right">0시간</span>
-            <div class="clear-both text-[9px] mt-1">${item?.sheetName ? '연결된 탭: ' + escapeHtml(item.sheetName) : '연결된 탭 없음'}</div>
-            <div class="text-[9px] mt-1">${escapeHtml(item?.reason || '분석 실패')}</div>
+            <div class="clear-both text-[9px] mt-1">시간표를 찾지 못함</div>
           </div>`;
       }
     });
@@ -837,6 +831,7 @@ async function saveAdminSettings() {
   }
 }
 
+// 병합된 셀(빈 행)을 만나더라도 이전 교시를 기억하여 데이터를 수집하는 구조
 function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
   function cleanText(value) { return String(value ?? '').replace(/\u200B/g, '').replace(/\uFEFF/g, '').replace(/\r/g, '').trim(); }
 
@@ -891,27 +886,6 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     return null;
   }
 
-  function parseLessonCell(raw) {
-    const text = cleanText(raw);
-    if (!text) return '';
-    const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
-    let className = '';
-    const subjectParts = [];
-    lines.forEach(line => {
-      let m = line.match(/([1-3])\s*[-]\s*(\d{1,2})/);
-      if (!m) m = line.match(/([1-3])\s*학년\s*(\d{1,2})\s*반/);
-      if (m && !className) {
-        className = `${m[1]}-${m[2]}`;
-        const remainder = line.replace(m[0], '').trim();
-        if (remainder) subjectParts.push(remainder);
-      } else {
-        subjectParts.push(line);
-      }
-    });
-    const subject = subjectParts.join(' ').trim();
-    return className ? `${className} ${subject}`.trim() : (subject || text);
-  }
-
   const sheetNames = rawSheets.map(s => String(s.name || ''));
   const results = {};
 
@@ -919,59 +893,100 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     const found = findTeacherSheet(teacher);
     const sheet = found.sheet;
     if (!sheet) {
-      results[teacher] = { count: 0, schedule: {0:{},1:{},2:{},3:{},4:{}}, sheetName: '', matchedBy: '', reason: '교사명과 일치하는 탭을 찾지 못함. (동일한 시트 파일에 탭이 있는지 확인해 주세요.)' };
+      results[teacher] = { count: 0, schedule: {0:{},1:{},2:{},3:{},4:{}}, sheetName: '', matchedBy: '', reason: '교사 탭 없음' };
       return;
     }
 
     const rows = Array.isArray(sheet.values) ? sheet.values : [];
     const schedule = {0:{},1:{},2:{},3:{},4:{}};
+    
+    // 요일(월~금)이 적힌 헤더 행 찾기
     let headerRow = -1;
-    let dayCols = {};
+    let dayCols = { 0:-1, 1:-1, 2:-1, 3:-1, 4:-1 };
 
-    for (let r = 0; r < Math.min(rows.length, 25); r++) {
-      const foundDays = {};
-      (rows[r] || []).forEach((cell, col) => {
-        const dIdx = dayIndexFromCell(cell);
-        if (dIdx >= 0 && foundDays[dIdx] === undefined) foundDays[dIdx] = col;
-      });
-      if (Object.keys(foundDays).length >= 3) {
+    for (let r = 0; r < Math.min(rows.length, 15); r++) {
+      let tempCols = { 0:-1, 1:-1, 2:-1, 3:-1, 4:-1 };
+      let foundCount = 0;
+      for (let c = 0; c < (rows[r]||[]).length; c++) {
+        const dIdx = dayIndexFromCell(rows[r][c]);
+        if (dIdx >= 0 && tempCols[dIdx] === -1) {
+          tempCols[dIdx] = c;
+          foundCount++;
+        }
+      }
+      if (foundCount >= 3) {
         headerRow = r;
-        dayCols = foundDays;
+        dayCols = tempCols;
         break;
       }
     }
 
     if (headerRow < 0) {
-      results[teacher] = { count: 0, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: `"${sheet.name}" 탭에서 '월, 화, 수...' 요일 머리글을 찾지 못함` };
+      results[teacher] = { count: 0, schedule, sheetName: sheet.name, matchedBy: found.matchedBy, reason: `헤더 없음` };
       return;
     }
 
-    const firstDayCol = Math.min(...Object.values(dayCols));
+    // 요일 열들의 가장 왼쪽 열 번호 (보통 교시는 이 왼쪽 어딘가에 있음)
+    let firstDayCol = Math.max(...Object.values(dayCols).filter(v => v !== -1));
+    for (let k in dayCols) {
+      if (dayCols[k] !== -1 && dayCols[k] < firstDayCol) firstDayCol = dayCols[k];
+    }
+
     let count = 0;
-    let periodRows = 0;
+    let currentPeriod = null; // 병합된 셀(빈 칸)을 위해 교시 상태를 유지
 
     for (let r = headerRow + 1; r < rows.length; r++) {
       const row = rows[r] || [];
-      let period = null;
-
-      for (let c = 0; c < Math.max(firstDayCol, 1); c++) {
+      
+      // 교시 확인 (행의 시작부분 탐색)
+      let pVal = null;
+      for (let c = 0; c < (firstDayCol > 0 ? firstDayCol : row.length); c++) {
         const p = periodFromCell(row[c]);
-        if (p !== null) { period = p; break; }
+        if (p !== null) { pVal = p; break; }
       }
-      if (period === null) {
-        for (let c = 0; c < Math.min(row.length, 8); c++) {
-          const p = periodFromCell(row[c]);
-          if (p !== null) { period = p; break; }
+
+      if (pVal !== null) {
+        currentPeriod = pVal;
+      }
+
+      if (currentPeriod === null) continue; // 교시를 찾기 전의 내용 무시
+
+      // 현재 교시에 맞춰 수업 내용 읽기
+      for (let dayIdx = 0; dayIdx < 5; dayIdx++) {
+        const colIdx = dayCols[dayIdx];
+        if (colIdx === -1 || !row[colIdx]) continue;
+
+        const text = cleanText(row[colIdx]);
+        if (!text) continue;
+
+        // "과목\n학년-반" 형태 분리 (예: "과학A\n2-1" -> "2-1 과학A")
+        let className = '';
+        const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+        const subjectParts = [];
+        
+        lines.forEach(line => {
+          let m = line.match(/([1-3])\s*[-]\s*(\d{1,2})/);
+          if (!m) m = line.match(/([1-3])\s*학년\s*(\d{1,2})\s*반/);
+          if (m && !className) {
+            className = `${m[1]}-${m[2]}`;
+            const remainder = line.replace(m[0], '').trim();
+            if (remainder) subjectParts.push(remainder);
+          } else {
+            subjectParts.push(line);
+          }
+        });
+        
+        const display = className ? `${className} ${subjectParts.join(' ')}`.trim() : text;
+
+        if (schedule[dayIdx][currentPeriod]) {
+          if (!schedule[dayIdx][currentPeriod].includes(display)) {
+            schedule[dayIdx][currentPeriod] += ' ' + display;
+          }
+        } else {
+          schedule[dayIdx][currentPeriod] = display;
+          count++;
         }
       }
-      if (period === null) continue;
-      periodRows++;
-
-      Object.entries(dayCols).forEach(([dayIdxStr, col]) => {
-        const dayIdx = Number(dayIdxStr);
-        const display = parseLessonCell(row[col]);
-        if (display) { schedule[dayIdx][period] = display; count++; }
-      });
     }
     
     results[teacher] = { 
@@ -979,7 +994,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
       schedule, 
       sheetName: sheet.name, 
       matchedBy: found.matchedBy, 
-      reason: count > 0 ? '정상 추출' : (periodRows === 0 ? `"${sheet.name}" 탭에서 1~7교시(또는 ①) 행을 찾지 못함` : `"${sheet.name}" 탭에서 요일/교시는 찾았지만 내용이 비어있음`) 
+      reason: count > 0 ? '정상' : '내용 없음' 
     };
   });
 
