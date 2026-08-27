@@ -282,6 +282,7 @@
 
     </div>
 
+    <!-- 하단 버튼 영역 -->
     <div class="bg-slate-100 p-4 border-t flex flex-wrap justify-end gap-2 safe-bottom">
       <button onclick="closeModal('modalAdminSettings')" class="px-5 py-2.5 bg-slate-300 text-slate-800 rounded-xl text-xs font-bold">
         닫기
@@ -686,22 +687,18 @@ function openDetailModal(id) {
   openModal('modalDetail');
 }
 
+// 📌 예약 취소 시 비밀번호 검사 제거
 async function deleteReservation() {
   if (!activeDetailId) return;
   if (!confirm('예약을 삭제할까요?')) return;
-  
-  let pwd = adminSessionPassword;
-  if (!pwd) {
-    pwd = prompt('예약을 취소하려면 관리자(또는 등록) 비밀번호를 입력하세요.');
-    if (!pwd) return; 
-  }
 
   const button = document.getElementById('btnDelRes');
   button.disabled = true;
   button.innerText = '삭제 중...';
 
   try {
-    await apiPost('deleteReservation', { id: activeDetailId, password: pwd });
+    // 비밀번호 매개변수 없이 백엔드로 요청
+    await apiPost('deleteReservation', { id: activeDetailId });
     closeModal('modalDetail');
     await fetchInitData(true);
   } catch (error) {
@@ -831,7 +828,6 @@ async function saveAdminSettings() {
   }
 }
 
-// 병합된 셀(빈 행)을 만나더라도 이전 교시를 기억하여 데이터를 수집하는 구조
 function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
   function cleanText(value) { return String(value ?? '').replace(/\u200B/g, '').replace(/\uFEFF/g, '').replace(/\r/g, '').trim(); }
 
@@ -900,7 +896,6 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     const rows = Array.isArray(sheet.values) ? sheet.values : [];
     const schedule = {0:{},1:{},2:{},3:{},4:{}};
     
-    // 요일(월~금)이 적힌 헤더 행 찾기
     let headerRow = -1;
     let dayCols = { 0:-1, 1:-1, 2:-1, 3:-1, 4:-1 };
 
@@ -926,19 +921,17 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
       return;
     }
 
-    // 요일 열들의 가장 왼쪽 열 번호 (보통 교시는 이 왼쪽 어딘가에 있음)
     let firstDayCol = Math.max(...Object.values(dayCols).filter(v => v !== -1));
     for (let k in dayCols) {
       if (dayCols[k] !== -1 && dayCols[k] < firstDayCol) firstDayCol = dayCols[k];
     }
 
     let count = 0;
-    let currentPeriod = null; // 병합된 셀(빈 칸)을 위해 교시 상태를 유지
+    let currentPeriod = null;
 
     for (let r = headerRow + 1; r < rows.length; r++) {
       const row = rows[r] || [];
       
-      // 교시 확인 (행의 시작부분 탐색)
       let pVal = null;
       for (let c = 0; c < (firstDayCol > 0 ? firstDayCol : row.length); c++) {
         const p = periodFromCell(row[c]);
@@ -949,9 +942,8 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
         currentPeriod = pVal;
       }
 
-      if (currentPeriod === null) continue; // 교시를 찾기 전의 내용 무시
+      if (currentPeriod === null) continue;
 
-      // 현재 교시에 맞춰 수업 내용 읽기
       for (let dayIdx = 0; dayIdx < 5; dayIdx++) {
         const colIdx = dayCols[dayIdx];
         if (colIdx === -1 || !row[colIdx]) continue;
@@ -959,7 +951,6 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
         const text = cleanText(row[colIdx]);
         if (!text) continue;
 
-        // "과목\n학년-반" 형태 분리 (예: "과학A\n2-1" -> "2-1 과학A")
         let className = '';
         const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
         const subjectParts = [];
