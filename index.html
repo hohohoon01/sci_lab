@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#0f766e">
   <title>강동중 과학실 예약</title>
 
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="dns-prefetch" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+  <link rel="dns-prefetch" href="https://script.googleusercontent.com">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
@@ -43,6 +48,10 @@
 
     @supports (padding: max(0px)) {
       .safe-bottom { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+    }
+
+    .toast-item {
+      transition: opacity .2s ease, transform .2s ease;
     }
   </style>
 </head>
@@ -141,6 +150,9 @@
   Copyright © HOHOHOON T
 </footer>
 
+<!-- 토스트 알림 -->
+<div id="toastContainer" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none w-[90%] max-w-sm"></div>
+
 <!-- 예약 모달 -->
 <div id="modalReservation" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-end sm:items-center justify-center z-50 p-0 sm:p-3">
   <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col modal-scroll">
@@ -210,7 +222,21 @@
       <div class="flex justify-between gap-3 border-b pb-2"><span class="text-slate-400">과학실</span><span id="detailRoom" class="font-bold">--</span></div>
       <div class="flex justify-between gap-3 border-b pb-2"><span class="text-slate-400">교사</span><span id="detailTeacher" class="font-bold text-teal-700">--</span></div>
       <div class="flex justify-between gap-3 border-b pb-2"><span class="text-slate-400">학급/과목</span><span id="detailClass" class="font-semibold text-right">--</span></div>
-      <div class="flex justify-between gap-3 border-b pb-2"><span class="text-slate-400">실험 내용</span><span id="detailTopic" class="text-right">--</span></div>
+
+      <div class="border-b pb-2">
+        <div class="flex justify-between items-center gap-3">
+          <span class="text-slate-400">실험 내용</span>
+          <button onclick="toggleEditTopic()" id="btnEditTopic" class="text-teal-600 font-bold text-[11px]">✏️ 수정</button>
+        </div>
+        <div id="detailTopicView" class="text-right mt-1 whitespace-pre-wrap break-words">--</div>
+        <div id="detailTopicEdit" class="hidden mt-2 space-y-2">
+          <textarea id="inputEditTopic" rows="3" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-teal-500" placeholder="실험 내용 / 메모"></textarea>
+          <div class="flex justify-end gap-2">
+            <button onclick="cancelEditTopic()" class="px-3 py-2 bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold">취소</button>
+            <button onclick="saveTopicEdit()" id="btnSaveTopicEdit" class="px-3 py-2 bg-teal-600 text-white rounded-lg text-[11px] font-bold">저장</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="bg-slate-50 p-4 border-t flex justify-between safe-bottom">
@@ -301,6 +327,17 @@
 const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPQKa3dTJmKBln4S7m3bPy7rhUtwQPimgS5F8LQ6e9iCdQdMI9utfAImhn4FX3JJvi/exec';
 const ROOMS = ['과학1실', '과학2실'];
 
+// 교시 구성: 1~7교시 + 방과후(8) — 방과후는 내부적으로 8교시로 저장됩니다.
+const REGULAR_PERIODS = [1, 2, 3, 4, 5, 6, 7];
+const AFTER_SCHOOL_PERIOD = 8;
+const PERIODS = [...REGULAR_PERIODS, AFTER_SCHOOL_PERIOD];
+
+function periodLabel(period) {
+  return Number(period) === AFTER_SCHOOL_PERIOD ? '방과후' : `${period}교시`;
+}
+
+const LOCAL_CACHE_KEY = 'gdScienceLabCache_v1';
+
 const PALETTE = [
   { bg:'bg-emerald-100 hover:bg-emerald-200', border:'border-emerald-400', text:'text-emerald-900', badge:'bg-emerald-500', ring:'ring-emerald-500' },
   { bg:'bg-sky-100 hover:bg-sky-200', border:'border-sky-400', text:'text-sky-900', badge:'bg-sky-500', ring:'ring-sky-500' },
@@ -357,6 +394,30 @@ function setSyncStatus(state, message) {
   else status.textContent = message;
 }
 
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const colors = {
+    success: 'bg-slate-900 text-white',
+    error: 'bg-rose-600 text-white'
+  };
+
+  const el = document.createElement('div');
+  el.className = `toast-item pointer-events-auto w-full text-center px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold opacity-0 translate-y-2 ${colors[type] || colors.success}`;
+  el.textContent = message;
+  container.appendChild(el);
+
+  requestAnimationFrame(() => {
+    el.classList.remove('opacity-0', 'translate-y-2');
+  });
+
+  setTimeout(() => {
+    el.classList.add('opacity-0');
+    setTimeout(() => el.remove(), 200);
+  }, 2400);
+}
+
 let activeTeachers = ['이서연','손아영','이정훈','정혜정'];
 let timetables = {};
 let reservations = [];
@@ -368,13 +429,43 @@ let selectedTeacher = null;
 let activeDetailId = null;
 let adminSessionPassword = '';
 
+function loadLocalCache() {
+  try {
+    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveLocalCache() {
+  try {
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({
+      activeTeachers, timetables, reservations, savedAt: Date.now()
+    }));
+  } catch (e) {
+    // 저장 실패 시 무시 (프라이빗 브라우징 등)
+  }
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function apiGet(action, params = {}) {
   const url = new URL(GOOGLE_APPS_SCRIPT_URL);
   url.searchParams.set('action', action);
   url.searchParams.set('_', Date.now());
   Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
 
-  const response = await fetch(url.toString(), {
+  const response = await fetchWithTimeout(url.toString(), {
     method: 'GET',
     cache: 'no-store',
     redirect: 'follow'
@@ -386,7 +477,7 @@ async function apiGet(action, params = {}) {
 }
 
 async function apiPost(action, payload = {}) {
-  const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+  const response = await fetchWithTimeout(GOOGLE_APPS_SCRIPT_URL, {
     method: 'POST',
     redirect: 'follow',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -407,6 +498,7 @@ async function fetchInitData(silent = false) {
     timetables = data.timetables || {};
     reservations = Array.isArray(data.reservations) ? data.reservations : [];
 
+    saveLocalCache();
     setSyncStatus('ok', '공유 데이터 동기화 완료');
     renderUI();
   } catch (error) {
@@ -498,9 +590,16 @@ function renderUI() {
   tbody.innerHTML = '';
   let totalRes = 0;
 
-  for (let period=1;period<=7;period++) {
+  PERIODS.forEach(period => {
+    const isAfterSchool = period === AFTER_SCHOOL_PERIOD;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="p-1.5 sm:p-2 text-center border-r border-slate-200 bg-slate-50 font-bold text-slate-800 text-xs sm:text-sm sticky left-0 z-10">${period}교시</td>`;
+    if (isAfterSchool) tr.className = 'bg-amber-50/40';
+
+    const labelCellClass = isAfterSchool
+      ? 'p-1.5 sm:p-2 text-center border-r border-slate-200 bg-amber-50 font-bold text-amber-800 text-xs sm:text-sm sticky left-0 z-10'
+      : 'p-1.5 sm:p-2 text-center border-r border-slate-200 bg-slate-50 font-bold text-slate-800 text-xs sm:text-sm sticky left-0 z-10';
+
+    tr.innerHTML = `<td class="${labelCellClass}">${periodLabel(period)}</td>`;
 
     for (let dayIdx=0;dayIdx<5;dayIdx++) {
       const dateStr = formatDate(addDays(currentMonday, dayIdx));
@@ -528,14 +627,15 @@ function renderUI() {
         td.innerHTML = `
           <button onclick="openReservationModal('${dateStr}', ${dayIdx}, ${period})"
             class="slot-button w-full rounded-xl border border-dashed border-slate-200 hover:border-teal-400 hover:bg-teal-50/50 flex items-center justify-center text-slate-300 hover:text-teal-600 group"
-            aria-label="${dateStr} ${period}교시 예약">
+            aria-label="${dateStr} ${periodLabel(period)} 예약">
             <span class="text-2xl font-light group-hover:scale-110 transition">+</span>
           </button>`;
       }
       tr.appendChild(td);
     }
     tbody.appendChild(tr);
-  }
+  });
+
   document.getElementById('statTotal').innerText = `${totalRes}건`;
 }
 
@@ -543,7 +643,7 @@ function openReservationModal(dateStr, dayIdx, period) {
   selectedSlot = { dateStr, dayIdx, period, room: currentRoom };
   selectedTeacher = null;
 
-  document.getElementById('modalTargetDateTime').innerText = `${dateStr} ${period}교시 · ${currentRoom}`;
+  document.getElementById('modalTargetDateTime').innerText = `${dateStr} ${periodLabel(period)} · ${currentRoom}`;
   document.getElementById('inputTopic').value = '';
   document.getElementById('inputCustomClass').value = '';
 
@@ -660,13 +760,22 @@ async function saveReservation() {
   };
 
   try {
-    await apiPost('saveReservation', newRes);
+    const result = await apiPost('saveReservation', newRes);
+    const saved = result.reservation || newRes;
+
+    // 서버가 돌려준 결과를 바로 화면에 반영 (전체 재조회를 기다리지 않아 체감 속도가 빨라짐)
+    reservations.push(saved);
+    saveLocalCache();
+
     closeModal('modalReservation');
-    await fetchInitData(true);
-    alert('예약이 저장되었습니다.');
+    renderUI();
+    showToast('예약이 저장되었습니다.');
+
+    // 다른 기기/탭과의 정합성을 위해 백그라운드로 조용히 재동기화
+    fetchInitData(true);
   } catch (error) {
     console.error(error);
-    alert('예약 저장 실패: ' + error.message);
+    showToast('예약 저장 실패: ' + error.message, 'error');
   } finally {
     button.disabled = false;
     button.innerText = '예약 확정';
@@ -678,13 +787,62 @@ function openDetailModal(id) {
   const res = reservations.find(r => r.id === id);
   if (!res) return;
 
-  document.getElementById('detailDateTime').innerText = `${res.date} ${res.period}교시`;
+  document.getElementById('detailDateTime').innerText = `${res.date} ${periodLabel(res.period)}`;
   document.getElementById('detailRoom').innerText = res.room || '과학1실';
   document.getElementById('detailTeacher').innerText = res.teacher || '-';
   document.getElementById('detailClass').innerText = res.gradeClass || '-';
-  document.getElementById('detailTopic').innerText = res.topic || '-';
+  document.getElementById('detailTopicView').innerText = res.topic || '-';
+  document.getElementById('inputEditTopic').value = res.topic || '';
 
+  cancelEditTopic();
   openModal('modalDetail');
+}
+
+function toggleEditTopic() {
+  document.getElementById('detailTopicView').classList.add('hidden');
+  document.getElementById('btnEditTopic').classList.add('hidden');
+  document.getElementById('detailTopicEdit').classList.remove('hidden');
+  document.getElementById('inputEditTopic').focus();
+}
+
+function cancelEditTopic() {
+  document.getElementById('detailTopicView').classList.remove('hidden');
+  document.getElementById('btnEditTopic').classList.remove('hidden');
+  document.getElementById('detailTopicEdit').classList.add('hidden');
+
+  const res = reservations.find(r => r.id === activeDetailId);
+  document.getElementById('inputEditTopic').value = res ? (res.topic || '') : '';
+}
+
+async function saveTopicEdit() {
+  if (!activeDetailId) return;
+
+  const newTopic = document.getElementById('inputEditTopic').value.trim();
+  const button = document.getElementById('btnSaveTopicEdit');
+  button.disabled = true;
+  button.innerText = '저장 중...';
+
+  try {
+    const result = await apiPost('updateReservation', { id: activeDetailId, topic: newTopic });
+    const idx = reservations.findIndex(r => r.id === activeDetailId);
+    if (idx >= 0) {
+      reservations[idx] = { ...reservations[idx], ...(result.reservation || {}), topic: newTopic };
+    }
+    saveLocalCache();
+
+    document.getElementById('detailTopicView').innerText = newTopic || '-';
+    cancelEditTopic();
+    renderUI();
+    showToast('실험 내용이 수정되었습니다.');
+
+    fetchInitData(true);
+  } catch (error) {
+    console.error(error);
+    showToast('실험 내용 수정 실패: ' + error.message, 'error');
+  } finally {
+    button.disabled = false;
+    button.innerText = '저장';
+  }
 }
 
 // 📌 예약 취소 시 비밀번호 검사 제거
@@ -692,18 +850,26 @@ async function deleteReservation() {
   if (!activeDetailId) return;
   if (!confirm('예약을 삭제할까요?')) return;
 
+  const idToDelete = activeDetailId;
   const button = document.getElementById('btnDelRes');
   button.disabled = true;
   button.innerText = '삭제 중...';
 
   try {
     // 비밀번호 매개변수 없이 백엔드로 요청
-    await apiPost('deleteReservation', { id: activeDetailId });
+    await apiPost('deleteReservation', { id: idToDelete });
+
+    reservations = reservations.filter(r => r.id !== idToDelete);
+    saveLocalCache();
+
     closeModal('modalDetail');
-    await fetchInitData(true);
+    renderUI();
+    showToast('예약이 취소되었습니다.');
+
+    fetchInitData(true);
   } catch (error) {
     console.error(error);
-    alert('예약 삭제 실패: ' + error.message);
+    showToast('예약 삭제 실패: ' + error.message, 'error');
   } finally {
     button.disabled = false;
     button.innerText = '🗑️ 예약 취소';
@@ -727,10 +893,10 @@ async function verifyAdmin() {
 
     adminSessionPassword = password;
     closeModal('modalAdminAuth');
-    
+
     document.getElementById('inputTeachers').value = activeTeachers.join(', ');
     document.getElementById('syncResultBox').classList.add('hidden');
-    
+
     openModal('modalAdminSettings');
   } catch (error) {
     alert('관리자 인증 실패: ' + error.message);
@@ -739,13 +905,13 @@ async function verifyAdmin() {
 
 async function syncTimetablesFromSheet() {
   if (!adminSessionPassword) { alert('관리자 인증이 필요합니다.'); return; }
-  
+
   const newTeachers = document.getElementById('inputTeachers').value.split(',').map(s => s.trim()).filter(Boolean);
   if (newTeachers.length === 0) { alert('교사 이름을 1명 이상 입력하세요.'); return; }
 
   const button = document.getElementById('btnSync');
   button.disabled = true;
-  button.innerText = '⏳ 구글 시트 데이터 스캔 중...'; 
+  button.innerText = '⏳ 구글 시트 데이터 스캔 중...';
 
   try {
     const rawDataResponse = await apiPost('getRawSheets', { password: adminSessionPassword });
@@ -755,7 +921,7 @@ async function syncTimetablesFromSheet() {
     await new Promise(resolve => setTimeout(resolve, 50));
 
     const parsedData = parseRawSheetsForTeachers(fetchedRawSheets, newTeachers);
-    
+
     let newTimetables = {};
     let resultHtml = '<div class="font-bold text-teal-800 mb-2">분석 결과</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
 
@@ -815,8 +981,9 @@ async function saveAdminSettings() {
 
     activeTeachers = window.previewTeachers || activeTeachers;
     timetables = window.previewTimetables || timetables;
+    saveLocalCache();
 
-    alert('설정이 저장되었습니다.');
+    showToast('설정이 저장되었습니다.');
     closeModal('modalAdminSettings');
     renderUI();
   } catch (error) {
@@ -829,7 +996,7 @@ async function saveAdminSettings() {
 }
 
 function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
-  function cleanText(value) { return String(value ?? '').replace(/\u200B/g, '').replace(/\uFEFF/g, '').replace(/\r/g, '').trim(); }
+  function cleanText(value) { return String(value ?? '').replace(/​/g, '').replace(/﻿/g, '').replace(/\r/g, '').trim(); }
 
   function findTeacherSheet(teacher) {
     const cleanTeacher = teacher.replace(/\s+/g, '');
@@ -858,7 +1025,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
     if (text === '수' || text === '수요일' || text === '(수)' || text === '[수]') return 2;
     if (text === '목' || text === '목요일' || text === '(목)' || text === '[목]') return 3;
     if (text === '금' || text === '금요일' || text === '(금)' || text === '[금]') return 4;
-    
+
     if (text.startsWith('월')) return 0;
     if (text.startsWith('화')) return 1;
     if (text.startsWith('수')) return 2;
@@ -870,7 +1037,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
   function periodFromCell(value) {
     const text = String(value ?? '').replace(/\s/g, '');
     if (!text) return null;
-    
+
     if (text.includes('1교시') || text === '1' || text === '(1)' || text === '[1]' || text === '①' || text === '1.') return 1;
     if (text.includes('2교시') || text === '2' || text === '(2)' || text === '[2]' || text === '②' || text === '2.') return 2;
     if (text.includes('3교시') || text === '3' || text === '(3)' || text === '[3]' || text === '③' || text === '3.') return 3;
@@ -895,7 +1062,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
 
     const rows = Array.isArray(sheet.values) ? sheet.values : [];
     const schedule = {0:{},1:{},2:{},3:{},4:{}};
-    
+
     let headerRow = -1;
     let dayCols = { 0:-1, 1:-1, 2:-1, 3:-1, 4:-1 };
 
@@ -931,7 +1098,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
 
     for (let r = headerRow + 1; r < rows.length; r++) {
       const row = rows[r] || [];
-      
+
       let pVal = null;
       for (let c = 0; c < (firstDayCol > 0 ? firstDayCol : row.length); c++) {
         const p = periodFromCell(row[c]);
@@ -954,7 +1121,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
         let className = '';
         const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
         const subjectParts = [];
-        
+
         lines.forEach(line => {
           let m = line.match(/([1-3])\s*[-]\s*(\d{1,2})/);
           if (!m) m = line.match(/([1-3])\s*학년\s*(\d{1,2})\s*반/);
@@ -966,7 +1133,7 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
             subjectParts.push(line);
           }
         });
-        
+
         const display = className ? `${className} ${subjectParts.join(' ')}`.trim() : text;
 
         if (schedule[dayIdx][currentPeriod]) {
@@ -979,13 +1146,13 @@ function parseRawSheetsForTeachers(rawSheets, targetTeachers) {
         }
       }
     }
-    
-    results[teacher] = { 
-      count, 
-      schedule, 
-      sheetName: sheet.name, 
-      matchedBy: found.matchedBy, 
-      reason: count > 0 ? '정상' : '내용 없음' 
+
+    results[teacher] = {
+      count,
+      schedule,
+      sheetName: sheet.name,
+      matchedBy: found.matchedBy,
+      reason: count > 0 ? '정상' : '내용 없음'
     };
   });
 
@@ -1024,6 +1191,17 @@ document.getElementById('datePicker').addEventListener('change', e => {
 document.getElementById('adminPwInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') verifyAdmin();
 });
+
+// 로컬에 저장된 이전 데이터가 있으면 즉시 화면에 표시(체감 로딩 속도 개선) 후,
+// 곧바로 서버에서 최신 데이터를 받아와 갱신합니다.
+const cachedInit = loadLocalCache();
+if (cachedInit && (Array.isArray(cachedInit.reservations) || cachedInit.timetables)) {
+  activeTeachers = (cachedInit.activeTeachers && cachedInit.activeTeachers.length) ? cachedInit.activeTeachers : activeTeachers;
+  timetables = cachedInit.timetables || timetables;
+  reservations = Array.isArray(cachedInit.reservations) ? cachedInit.reservations : reservations;
+  setSyncStatus('loading', '임시 저장된 데이터 표시 중...');
+  renderUI();
+}
 
 fetchInitData(true);
 setInterval(() => { if (document.visibilityState === 'visible') fetchInitData(true); }, 30000);
