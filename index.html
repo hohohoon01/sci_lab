@@ -169,6 +169,13 @@
 
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-2">
+          과학실 선택 <span class="text-red-500">*</span>
+        </label>
+        <div id="reservationRoomButtons" class="grid grid-cols-2 gap-2"></div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-2">
           1. 담당 교사 선택 <span class="text-red-500">*</span>
         </label>
         <div id="teacherButtons" class="grid grid-cols-2 gap-2"></div>
@@ -219,7 +226,10 @@
 
     <div class="p-4 space-y-3 text-xs">
       <div class="flex justify-between gap-3 border-b pb-2"><span class="text-slate-400">일시</span><span id="detailDateTime" class="font-semibold text-right">--</span></div>
-      <div class="flex justify-between gap-3 border-b pb-2"><span class="text-slate-400">과학실</span><span id="detailRoom" class="font-bold">--</span></div>
+      <div class="flex justify-between items-center gap-3 border-b pb-2">
+        <span class="text-slate-400">과학실</span>
+        <div id="detailRoomButtons" class="flex gap-1.5"></div>
+      </div>
       <div class="flex justify-between gap-3 border-b pb-2"><span class="text-slate-400">교사</span><span id="detailTeacher" class="font-bold text-teal-700">--</span></div>
       <div class="flex justify-between gap-3 border-b pb-2"><span class="text-slate-400">학급/과목</span><span id="detailClass" class="font-semibold text-right">--</span></div>
 
@@ -639,11 +649,49 @@ function renderUI() {
   document.getElementById('statTotal').innerText = `${totalRes}건`;
 }
 
+function findReservationAt(dateStr, period, room, excludeId = null) {
+  return reservations.find(r =>
+    r.id !== excludeId &&
+    r.date === dateStr &&
+    Number(r.period) === Number(period) &&
+    (r.room || '과학1실') === room
+  );
+}
+
+function roomButtonClass(active, taken) {
+  if (active) return 'bg-teal-600 text-white border-teal-600 shadow-sm';
+  if (taken) return 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed';
+  return 'bg-white text-slate-700 border-slate-300 hover:bg-teal-50';
+}
+
+function renderReservationRoomButtons() {
+  const div = document.getElementById('reservationRoomButtons');
+  div.innerHTML = '';
+  ROOMS.forEach(room => {
+    const active = room === selectedSlot.room;
+    const taken = !active && !!findReservationAt(selectedSlot.dateStr, selectedSlot.period, room);
+    div.innerHTML += `
+      <button type="button" onclick="selectReservationRoom('${room}')" ${taken ? 'disabled' : ''}
+        class="p-2.5 rounded-xl border font-bold text-xs transition ${roomButtonClass(active, taken)}">
+        🧪 ${room}${taken ? ' <span class="block text-[10px] font-normal">이미 예약됨</span>' : ''}
+      </button>`;
+  });
+  document.getElementById('modalTargetDateTime').innerText =
+    `${selectedSlot.dateStr} ${periodLabel(selectedSlot.period)} · ${selectedSlot.room}`;
+}
+
+function selectReservationRoom(room) {
+  if (!selectedSlot) return;
+  if (findReservationAt(selectedSlot.dateStr, selectedSlot.period, room)) return;
+  selectedSlot.room = room;
+  renderReservationRoomButtons();
+}
+
 function openReservationModal(dateStr, dayIdx, period) {
   selectedSlot = { dateStr, dayIdx, period, room: currentRoom };
   selectedTeacher = null;
 
-  document.getElementById('modalTargetDateTime').innerText = `${dateStr} ${periodLabel(period)} · ${currentRoom}`;
+  renderReservationRoomButtons();
   document.getElementById('inputTopic').value = '';
   document.getElementById('inputCustomClass').value = '';
 
@@ -744,6 +792,11 @@ async function saveReservation() {
     if (!cls) { alert('수업/행사명을 직접 입력하세요.'); return; }
   }
 
+  if (findReservationAt(selectedSlot.dateStr, selectedSlot.period, selectedSlot.room)) {
+    alert(`${selectedSlot.room}은(는) 이 시간에 이미 예약되어 있습니다.`);
+    return;
+  }
+
   const topic = document.getElementById('inputTopic').value.trim();
   const button = document.getElementById('btnSaveRes');
 
@@ -767,6 +820,7 @@ async function saveReservation() {
     reservations.push(saved);
     saveLocalCache();
 
+    currentRoom = selectedSlot.room;
     closeModal('modalReservation');
     renderUI();
     showToast('예약이 저장되었습니다.');
@@ -788,7 +842,7 @@ function openDetailModal(id) {
   if (!res) return;
 
   document.getElementById('detailDateTime').innerText = `${res.date} ${periodLabel(res.period)}`;
-  document.getElementById('detailRoom').innerText = res.room || '과학1실';
+  renderDetailRoomButtons(res);
   document.getElementById('detailTeacher').innerText = res.teacher || '-';
   document.getElementById('detailClass').innerText = res.gradeClass || '-';
   document.getElementById('detailTopicView').innerText = res.topic || '-';
@@ -796,6 +850,79 @@ function openDetailModal(id) {
 
   cancelEditTopic();
   openModal('modalDetail');
+}
+
+function renderDetailRoomButtons(res) {
+  const div = document.getElementById('detailRoomButtons');
+  const curRoom = res.room || '과학1실';
+  div.innerHTML = '';
+  ROOMS.forEach(room => {
+    const active = room === curRoom;
+    const taken = !active && !!findReservationAt(res.date, res.period, room, res.id);
+    div.innerHTML += `
+      <button type="button" onclick="changeReservationRoom('${room}')" ${active || taken ? 'disabled' : ''}
+        title="${taken ? '이 시간에 이미 예약이 있습니다' : (active ? '현재 과학실' : room + '(으)로 변경')}"
+        class="px-2.5 py-1.5 rounded-lg border font-bold text-[11px] transition ${roomButtonClass(active, taken)}">
+        ${room}
+      </button>`;
+  });
+}
+
+// 과학실 변경: 새 과학실에 같은 내용으로 저장한 뒤 기존 예약을 삭제합니다.
+// (기존 Google Apps Script의 저장/삭제 기능만 사용하므로 서버 수정이 필요 없습니다.)
+async function changeReservationRoom(newRoom) {
+  const res = reservations.find(r => r.id === activeDetailId);
+  if (!res) return;
+  const oldRoom = res.room || '과학1실';
+  if (newRoom === oldRoom) return;
+
+  if (findReservationAt(res.date, res.period, newRoom, res.id)) {
+    alert(`${newRoom}은(는) 이 시간에 이미 예약되어 있습니다.`);
+    return;
+  }
+  if (!confirm(`${oldRoom} → ${newRoom}(으)로 과학실을 변경할까요?`)) return;
+
+  const buttons = document.querySelectorAll('#detailRoomButtons button');
+  buttons.forEach(b => b.disabled = true);
+
+  const moved = {
+    date: res.date,
+    period: res.period,
+    room: newRoom,
+    teacher: res.teacher,
+    gradeClass: res.gradeClass,
+    topic: res.topic || ''
+  };
+
+  try {
+    const result = await apiPost('saveReservation', moved);
+    const saved = result.reservation || moved;
+
+    try {
+      await apiPost('deleteReservation', { id: res.id });
+    } catch (delError) {
+      reservations.push(saved);
+      saveLocalCache();
+      renderUI();
+      showToast(`${newRoom}에 저장했지만 기존 예약 삭제에 실패했습니다. ${oldRoom} 예약을 직접 취소해주세요.`, 'error');
+      fetchInitData(true);
+      return;
+    }
+
+    reservations = reservations.filter(r => r.id !== res.id);
+    reservations.push(saved);
+    saveLocalCache();
+
+    currentRoom = newRoom;
+    closeModal('modalDetail');
+    renderUI();
+    showToast(`${newRoom}(으)로 변경되었습니다.`);
+    fetchInitData(true);
+  } catch (error) {
+    console.error(error);
+    showToast('과학실 변경 실패: ' + error.message, 'error');
+    renderDetailRoomButtons(res);
+  }
 }
 
 function toggleEditTopic() {
